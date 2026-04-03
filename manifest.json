@@ -2,8 +2,8 @@
   "name": "My PWA App",
   "short_name": "MyApp",
   "description": "",
-  "start_url": "/ZIWE/",
-  "scope": "/ZIWE/",
+  "start_url": "/ZIWEI/",
+  "scope": "/ZIWEI/",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#1a73e8",
@@ -16,7 +16,7 @@
     {
       "name": "開啟 MyApp",
       "short_name": "MyApp",
-      "url": "/ZIWE/",
+      "url": "/ZIWEI/",
       "icons": [
         {
           "src": "icon-192.png",

@@ -4,13 +4,13 @@
 
 const CACHE_NAME = 'myapp-v1';
 const PRECACHE_URLS = [
-    "/ZIWE/index.html",
-    "/ZIWE/sw.js",
-    "/ZIWE/manifest.json",
-    "/ZIWE/icon.svg",
-    "/ZIWE/offline.html",
-    "/ZIWE/icon-192.png",
-    "/ZIWE/icon-512.png"
+    "/ZIWEI/index.html",
+    "/ZIWEI/sw.js",
+    "/ZIWEI/manifest.json",
+    "/ZIWEI/icon.svg",
+    "/ZIWEI/offline.html",
+    "/ZIWEI/icon-192.png",
+    "/ZIWEI/icon-512.png"
 ];
 
 // Install: pre-cache assets
@@ -59,7 +59,7 @@ self.addEventListener('fetch', event => {
             return response;
           }).catch(() => null);
 
-          return cached || fetchPromise || caches.match('/ZIWE/offline.html');
+          return cached || fetchPromise || caches.match('/ZIWEI/offline.html');
         })
       )
     );
@@ -77,7 +77,7 @@ self.addEventListener('fetch', event => {
           return response;
         }).catch(() => {
           if (event.request.destination === 'document') {
-            return caches.match('/ZIWE/offline.html');
+            return caches.match('/ZIWEI/offline.html');
           }
         });
       })
