@@ -1,14 +1,44 @@
-# 紫微斗數排盤系統
+# My PWA App
 
-完整紫微斗數排盤飛宮系統，支援 PWA 離線使用。
+> 一個 Progressive Web App
 
-## 部署步驟
+## 📦 包含檔案
 
-1. 將 `index.html` 和 `sw.js` 上傳到 GitHub repo
-2. Settings → Pages → Source 選 `main` branch
-3. 網址：`https://你的帳號.github.io/repo名稱/`
+- `icon-192.png`
+- `icon-512.png`
+- `manifest.json`
+- `sw.js`
+- `index.html`
+- `icon.svg`
+- `icon-maskable.svg`
+- `offline.html`
 
-## 手機安裝
+## 🚀 部署到 GitHub Pages
 
-- **iOS**：Safari 開啟 → 分享 → 加入主畫面
-- **Android**：Chrome 開啟 → 選單 → 新增至主畫面
+```bash
+git init
+git add .
+git commit -m "init: My PWA App PWA"
+git branch -M main
+git remote add origin https://github.com/<username>/<repo>.git
+git push -u origin main
+```
+
+然後在 GitHub repo → **Settings → Pages** → Source 選 `main` 分支，等待幾分鐘後即可訪問。
+
+## 📱 安裝 PWA
+
+在支援的瀏覽器（Chrome / Edge / Safari iOS）中打開網頁，  
+點擊「**安裝**」或「**加入主畫面**」即可將此 App 安裝到裝置。
+
+## ⚙ 技術規格
+
+| 項目 | 值 |
+|------|-----|
+| display | standalone |
+| theme_color | #1a73e8 |
+| lang | zh-TW |
+| scope | /ZIWE/ |
+
+---
+*由 [PWA 打包神器](https://github.com) 自動生成*

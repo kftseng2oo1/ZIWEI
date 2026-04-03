@@ -1,0 +1,15 @@
+<svg id="svgMain" width="512" height="512" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" id="sStart" stop-color="#D4D486"></stop>
+              <stop offset="100%" id="sEnd" stop-color="#808000"></stop>
+            </linearGradient>
+            <filter id="fShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="0.5" stdDeviation="0.8" flood-color="rgba(0,0,0,0.7)"></feDropShadow>
+            </filter>
+          </defs>
+          <rect id="rBase" x="0.5" y="0.5" width="23" height="23" rx="5.32" ry="5.32" fill="#ff8ff0" stroke="#ffffff" stroke-width="1.1"></rect>
+          <circle id="cOuter" cx="12" cy="12" r="11.5" fill="#000040" style="display:none"></circle>
+          <path id="pGeo" d="M12.000,3.500L14.277,6.503L18.010,5.990L17.497,9.723L20.500,12.000L17.497,14.277L18.010,18.010L14.277,17.497L12.000,20.500L9.723,17.497L5.990,18.010L6.503,14.277L3.500,12.000L6.503,9.723L5.990,5.990L9.723,6.503Z" fill="url(#g1)"></path>
+          <g id="gSlot"><text x="12" y="12" dy="0.38em" text-anchor="middle" font-weight="900" font-size="8" fill="#643030">Z</text></g>
+        </svg>
