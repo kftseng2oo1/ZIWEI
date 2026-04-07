@@ -263,13 +263,13 @@
     </style>
 
 <!-- PWA Meta — auto-injected by PWA 打包神器 -->
-<meta name="application-name" content="紫微斗數">
+<meta name="application-name" content="紫微斗數+AI大師">
 <meta name="description" content="">
 <meta name="theme-color" content="#1a73e8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="紫微斗數">
+<meta name="apple-mobile-web-app-title" content="紫微斗數+AI大師">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
 <script>if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').then(function(r){console.log('[SW] registered:',r.scope)}).catch(function(e){console.warn('[SW] failed:',e)});});}</script>
@@ -354,7 +354,7 @@
 <div class="report-wrap">
     <div class="report" id="reportArea" style="display:none;">
         <h3>【三層飛宮分析報告：體（生年）・用（大限）・出（流年）】</h3>
-        <div style="margin-bottom:12px;">
+        <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
             <button onclick="toggleExpertReport()" id="btnExpert"
                 style="background:linear-gradient(135deg,#5a3000,#b8860b);border:none;color:#fff8e7;
                        font-family:'Noto Serif TC',serif;font-size:0.9em;letter-spacing:0.15em;
@@ -363,9 +363,36 @@
                 onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">
                 ⚖ 大師級飛星深度理則分析
             </button>
+            <button onclick="runAIMaster()" id="btnAI"
+                style="background:linear-gradient(135deg,#1a0050,#6c3483);border:1px solid rgba(155,89,182,0.5);
+                       color:#e8daef;font-family:'Noto Serif TC',serif;font-size:0.9em;letter-spacing:0.15em;
+                       padding:8px 20px;border-radius:6px;cursor:pointer;font-weight:700;
+                       box-shadow:0 2px 12px rgba(108,52,131,0.4);transition:opacity 0.2s;"
+                onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">
+                🤖 AI 紫微大師深度論命
+            </button>
         </div>
         <div class="summary-box" id="quickSummary" style="display:none;"></div>
         <div class="report-grid" id="reportGrid"></div>
+        <!-- AI 大師分析輸出區 -->
+        <div id="aiMasterWrap" style="display:none;margin-top:24px;">
+            <div style="border:1px solid rgba(155,89,182,0.4);border-radius:10px;
+                        background:rgba(26,0,80,0.3);backdrop-filter:blur(8px);padding:20px 24px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;
+                            border-bottom:1px solid rgba(155,89,182,0.3);padding-bottom:12px;">
+                    <span style="font-size:1.4em;">🤖</span>
+                    <div>
+                        <div style="color:#c39bd3;font-size:.8em;letter-spacing:2px;">AI 紫微斗數大師</div>
+                        <div style="color:#e8daef;font-size:1em;font-weight:700;letter-spacing:1px;">深度論命報告</div>
+                    </div>
+                    <button onclick="document.getElementById('aiMasterWrap').style.display='none'"
+                        style="margin-left:auto;background:none;border:none;color:rgba(200,200,200,0.5);
+                               font-size:18px;cursor:pointer;">✕</button>
+                </div>
+                <div id="aiMasterOutput" style="color:#e8dcc8;line-height:1.9;font-size:.92em;
+                     white-space:pre-wrap;font-family:'Noto Serif TC',serif;"></div>
+            </div>
+        </div>
         <!-- ▼ 大師級飛星深度理則分析插件輸出區 ▼ -->
         <div id="expertAnalysisWrap" style="margin-top:28px;display:none;">
             <div id="expertAnalysis"></div>
@@ -5617,6 +5644,142 @@ function generateExpertReport(palaces, birthGan, daLimitGan, flowYearGan2) {
 
     html += `<div style="text-align:right;font-size:.75em;opacity:.4;margin-top:4px;">Ziwei Expert Plugin v1.0 · 曾大師理則</div></div>`;
     return html;
+}
+
+// ── AI 紫微大師深度論命 ──
+// ▼ 填入你的 Cloudflare Worker URL（部署後修改此行）
+const ZIWEI_WORKER_URL = 'https://arcar.kftseng2oo1.workers.dev';
+
+async function runAIMaster() {
+    if (!chartData) { alert('請先排盤後再呼叫 AI 大師分析。'); return; }
+
+    const btn = document.getElementById('btnAI');
+    const wrap = document.getElementById('aiMasterWrap');
+    const output = document.getElementById('aiMasterOutput');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ AI 大師分析中…';
+    wrap.style.display = 'block';
+    output.textContent = '正在連線 AI 紫微大師，請稍候…';
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // ── 整理命盤資料成結構化文字 ──
+    const palaces = chartData.palaces;
+    const bGan = chartData.yearGan;
+    const bZhi = chartData.yearZhi;
+    const mingPalace = palaces.find(p => p.isMing);
+    const SIHUA_LOCAL = {
+        '甲':{祿:'廉貞',權:'破軍',科:'武曲',忌:'太陽'},'乙':{祿:'天機',權:'天梁',科:'紫微',忌:'太陰'},
+        '丙':{祿:'天同',權:'天機',科:'文昌',忌:'廉貞'},'丁':{祿:'太陰',權:'天同',科:'天機',忌:'巨門'},
+        '戊':{祿:'貪狼',權:'太陰',科:'右弼',忌:'天機'},'己':{祿:'武曲',權:'貪狼',科:'天梁',忌:'文曲'},
+        '庚':{祿:'太陽',權:'武曲',科:'太陰',忌:'天同'},'辛':{祿:'巨門',權:'太陽',科:'文曲',忌:'文昌'},
+        '壬':{祿:'天梁',權:'紫微',科:'左輔',忌:'武曲'},'癸':{祿:'破軍',權:'巨門',科:'太陰',忌:'貪狼'},
+    };
+    const bSh = SIHUA_LOCAL[bGan] || {};
+
+    // 十二宮資訊
+    const palaceInfo = palaces.map(p => {
+        const stars = [...(p.stars?.m||[]), ...(p.stars?.a||[])].join('、') || '（無主星）';
+        return `【${p.name}】${p.gan}干・${stars}`;
+    }).join('\n');
+
+    // 流年資訊
+    const fy = parseInt(document.getElementById('flowYear')?.value || new Date().getFullYear());
+    const fyGan = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'][(fy-4)%10];
+    const fyZhi = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'][(fy-4)%12];
+    const fySh = SIHUA_LOCAL[fyGan] || {};
+
+    // 大限
+    let dxInfo = '（未設定大限）';
+    if (typeof currentDaxian !== 'undefined' && currentDaxian) {
+        const dxSh = SIHUA_LOCAL[currentDaxian.gan] || {};
+        dxInfo = `大限宮：${currentDaxian.palaceName}（${currentDaxian.gan}干・${currentDaxian.startAge}-${currentDaxian.endAge}歲）\n大限四化：祿=${dxSh.祿||'?'} 權=${dxSh.權||'?'} 科=${dxSh.科||'?'} 忌=${dxSh.忌||'?'}`;
+    }
+
+    const personName = document.getElementById('personName')?.value?.trim() || '命主';
+    const gender = document.getElementById('gender')?.value === 'M' ? '男命' : '女命';
+    const mingStars = [...(mingPalace?.stars?.m||[])].join('、') || '（空宮）';
+
+    const prompt = `你是精通曾氏紫微斗數「飛星四化」理則的大師，擅長三層體用出（生年・大限・流年）的深度分析，熟悉祿隨忌走、忌入忌出、自化截斷等進階理則。
+
+請根據以下命盤資料，以繁體中文為【${personName}】（${gender}）提供深度論命報告。
+
+━━━ 命盤基本資料 ━━━
+命主：${personName}（${gender}）
+生年干支：${bGan}${bZhi}年
+生年四化：祿=${bSh.祿||'?'} 權=${bSh.權||'?'} 科=${bSh.科||'?'} 忌=${bSh.忌||'?'}
+命宮：${mingPalace?.name||'?'}（${mingPalace?.gan||'?'}干）・主星：${mingStars}
+
+━━━ 十二宮星曜配置 ━━━
+${palaceInfo}
+
+━━━ 大限資訊 ━━━
+${dxInfo}
+
+━━━ 流年資訊 ━━━
+流年：${fy}年（${fyGan}${fyZhi}年）
+流年四化：祿=${fySh.祿||'?'} 權=${fySh.權||'?'} 科=${fySh.科||'?'} 忌=${fySh.忌||'?'}
+
+━━━ 論命要求 ━━━
+請依以下結構撰寫：
+
+【一、命格總論】
+綜合命宮主星、生年四化、格局特質，論述命主先天稟賦、個性與人生主軸。
+
+【二、財運格局】
+從財帛宮、田宅宮與三層四化（生年・大限・流年）論財運結構，指出此生財富的來源方式與關鍵時機。
+
+【三、事業職涯】
+從官祿宮、命宮飛化與大限走向，論命主事業特質、最適行業與職涯發展節奏。
+
+【四、感情婚姻】
+從夫妻宮飛化、三層祿忌互動，論感情模式、婚姻品質與注意事項。
+
+【五、本大限深度解析】
+針對目前大限（如已設定），深入分析十年能量走向、吉凶關鍵與行動策略。
+
+【六、${fy}流年重點提示】
+結合流年四化與命盤，指出今年財運、事業、健康、感情四大領域的吉凶月份與行動綱要。
+
+【七、綜合建議】
+以「趨吉避凶」為核心，提供3-5條具體可執行的人生策略建議。
+
+請以古典命理大師的口吻撰寫，文字精練深刻，每段控制在150字以內，避免過度重複，直接給出論斷而非泛泛而談。`;
+
+    try {
+        // 優先用 Cloudflare Worker proxy（一般瀏覽器），
+        // 若在 claude.ai Artifacts 環境則直接呼叫 Anthropic API
+        const isArtifacts = location.hostname.includes('claude.ai') || location.hostname === 'localhost';
+        const apiUrl  = isArtifacts
+            ? 'https://api.anthropic.com/v1/messages'
+            : ZIWEI_WORKER_URL;
+        const headers = isArtifacts
+            ? { 'Content-Type': 'application/json' }
+            : { 'Content-Type': 'application/json' };
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 2000,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+        const data = await response.json();
+        if (data?.content?.[0]?.text) {
+            output.textContent = data.content[0].text;
+        } else if (data?.error) {
+            output.textContent = `⚠ API 錯誤：${data.error.message}`;
+        } else {
+            output.textContent = '⚠ 回應格式異常，請稍後再試。';
+        }
+    } catch (err) {
+        output.textContent = `⚠ 連線失敗：${err.message}\n\n請確認：\n1. Cloudflare Worker 已部署（${ZIWEI_WORKER_URL}）\n2. Worker 的 ANTHROPIC_API_KEY 環境變數已設定\n3. 網路連線正常`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🤖 AI 紫微大師深度論命';
+    }
 }
 
 function toggleExpertReport() {
