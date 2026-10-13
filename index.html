@@ -5643,7 +5643,9 @@ function mfaBuild() {
     const fy = parseInt(document.getElementById('flowYear').value);
     const dj = getDouJunDzIdx(fy);
     const months = Array.from({ length: 12 }, (_, i) => analyzeFlowMonth(i + 1, dj, fy));
-    const name = document.getElementById('personName')?.value?.trim() || '命主';
+    const rawName = document.getElementById('personName')?.value?.trim() || '';
+    const hasName = !!rawName && rawName !== '命主';
+    const name = hasName ? rawName : '';
     const gz = flowYearGan + DI_ZHI[((fy - 4) % 12 + 12) % 12];
     const mn = i => MF_MON[i] + '月';
     const byScore = [...months].sort((a, b) => b.score - a.score);
@@ -5654,7 +5656,7 @@ function mfaBuild() {
 
     const scenes = [];
     scenes.push({ type: 'intro', name, fy, gz, lines: [
-        `這是命主「${name}」${fy}年的流月運勢分析。`, `${gz}年，我們一個月一個月來看。`] });
+        hasName ? `這是命主「${name}」${fy}年的流月運勢分析。` : `這是${fy}年的流月運勢分析。`, `${gz}年，我們一個月一個月來看。`] });
     scenes.push({ type: 'overview', months, best, worst, dj, lines: [
         `今年的斗君在${DI_ZHI[dj]}，也就是正月的流月命宮落在${DI_ZHI[dj]}宮。`,
         `整體來看，${join(best)}，是可以積極出擊的月份；`, `${join(worst)}，則要比較保守。`] });
@@ -5714,7 +5716,7 @@ function mfaBG() {
 
 // ── 共用元件 ──
 function mfaHeader(c, d, sub) {
-    mfaT(c, `${d.name}・${d.fy} ${d.gz}年　${sub}`, MFA_W / 2, 92, mfaF(700, 34), MFA_COL.gold);
+    mfaT(c, `${d.name ? d.name + '・' : ''}${d.fy} ${d.gz}年　${sub}`, MFA_W / 2, 92, mfaF(700, 34), MFA_COL.gold);
     c.strokeStyle = mfaA(MFA_COL.gold, 0.35); c.lineWidth = 1;
     c.beginPath(); c.moveTo(300, 128.5); c.lineTo(780, 128.5); c.stroke();
 }
@@ -5787,7 +5789,7 @@ function mfaIntro(c, s, t, L, d) {
         mfaT(c, '流月運勢', MFA_W / 2, y + 250, mfaF(900, 128), MFA_COL.cream);
         mfaT(c, `${s.fy} ${s.gz}年　農曆一至十二月`, MFA_W / 2, y + 380, mfaF(700, 44), MFA_COL.gold2);
     });
-    mfaAlpha(c, mfaRamp(t, L[1], 0.6), () => {
+    if (s.name) mfaAlpha(c, mfaRamp(t, L[1], 0.6), () => {
         const w = Math.max(420, (c.font = mfaF(700, 38), c.measureText(`命主　${s.name}`).width + 120));
         mfaRR(c, MFA_W / 2 - w / 2, 1320, w, 80, 40); c.fillStyle = 'rgba(30,20,10,0.7)'; c.fill();
         c.strokeStyle = mfaA(MFA_COL.gold, 0.63); c.lineWidth = 2; c.stroke();
@@ -5966,7 +5968,7 @@ function mfaOutro(c, s, t, L, d) {
         mfaT(c, '僅供參考', MFA_W / 2, 840, mfaF(900, 110), MFA_COL.cream);
         mfaT(c, '吉凶為規則化評分　趨吉避凶在於行動', MFA_W / 2, 980, mfaF(700, 38), MFA_COL.gold2);
         c.strokeStyle = mfaA(MFA_COL.gold, 0.47); c.lineWidth = 1; c.beginPath(); c.moveTo(300, 1060.5); c.lineTo(780, 1060.5); c.stroke();
-        mfaT(c, `${s.name}・${s.fy} ${s.gz}年流月運勢`, MFA_W / 2, 1120, mfaF(400, 34, 'sans'), MFA_COL.dim);
+        mfaT(c, `${s.name ? s.name + '・' : ''}${s.fy} ${s.gz}年流月運勢`, MFA_W / 2, 1120, mfaF(400, 34, 'sans'), MFA_COL.dim);
     });
 }
 const MFA_DRAW = { intro: mfaIntro, overview: mfaOverview, month: mfaMonth, summary: mfaSummary, outro: mfaOutro };
