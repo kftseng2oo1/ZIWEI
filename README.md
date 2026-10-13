@@ -9,8 +9,9 @@
 - `manifest.json`
 - `sw.js`
 - `index.html`
-- `icon.svg`
-- `icon-maskable.svg`
+- `icon-maskable-512.png`
+- `apple-touch-icon.png`
+- `favicon.png`
 - `offline.html`
 
 ## 🚀 部署到 GitHub Pages
