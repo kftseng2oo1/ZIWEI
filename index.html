@@ -3147,23 +3147,14 @@ const ZIWEI_REMAINDER = {
 };
 
 function getZiweiDz(lunarDay, juNum) {
-    const quotient = Math.floor(lunarDay / juNum);
-    const remainder = lunarDay % juNum;
-
-    if (remainder === 0) {
-        // 整除：從寅宮起走 quotient 步（寅算第1步）
-        return (2 + quotient - 1) % 12;
-    } else {
-        if (quotient === 0) {
-            // 商=0（日數 < 局數）：直接在餘數宮安紫微
-            return ZIWEI_REMAINDER[juNum][remainder];
-        } else {
-            // 從餘數宮的前一宮起，走 quotient 步（起點算第1步）
-            const remDzIdx = ZIWEI_REMAINDER[juNum][remainder];
-            const startDzIdx = (remDzIdx + 1) % 12;
-            return (startDzIdx + quotient - 1) % 12;
-        }
-    }
+    // 標準安紫微法：找最小補數 x 使 (日+x) 可被局數整除，商 q
+    // 由寅宮起 1 數到 q；補數為奇數則逆退 x 宮，偶數則順進 x 宮
+    let x = 0;
+    while ((lunarDay + x) % juNum !== 0) x++;
+    const q = (lunarDay + x) / juNum;
+    let idx = 2 + (q - 1);
+    idx += (x % 2 === 1) ? -x : x;
+    return ((idx % 12) + 12) % 12;
 }
 
 // ================================================================
@@ -3242,7 +3233,7 @@ function getKuiYue(yearGan) {
 }
 
 // 擎羊、陀羅、火星、鈴星
-function getShaStars(yearGan, hourIdx) {
+function getShaStars(yearGan, hourIdx, yearZhi) {
     // 擎羊：年干定位
     const qingyangTable = { '甲':'卯','乙':'辰','丙':'午','丁':'未','戊':'午','己':'未','庚':'酉','辛':'戌','壬':'子','癸':'丑' };
     // 陀羅：擎羊前一位
@@ -3251,13 +3242,17 @@ function getShaStars(yearGan, hourIdx) {
     const qyIdx = DZ_INDEX[qingyangTable[yearGan]];
     const tlIdx = DZ_INDEX[tuoluoTable[yearGan]];
 
-    // 火星 (依年支和時辰，簡化版：寅午戌年起丑，申子辰年起寅，巳酉丑年起卯，亥卯未年起酉)
-    // 簡化：以時辰順行
-    const huoxingBase = [2, 3, 1, 9]; // 寅午戌, 申子辰, 巳酉丑, 亥卯未
-    const huoxingIdx = (1 + hourIdx) % 12; // simplified
-
-    // 鈴星 (similar pattern, simplified)
-    const lingxingIdx = (10 + hourIdx) % 12; // simplified
+    // 火星、鈴星：依年支三合局定起點，子時起順行至生時
+    //   寅午戌：火丑 鈴卯　申子辰：火寅 鈴戌　巳酉丑：火卯 鈴戌　亥卯未：火酉 鈴戌
+    const HUO_LING = {
+        '寅':[1,3],'午':[1,3],'戌':[1,3],
+        '申':[2,10],'子':[2,10],'辰':[2,10],
+        '巳':[3,10],'酉':[3,10],'丑':[3,10],
+        '亥':[9,10],'卯':[9,10],'未':[9,10],
+    };
+    const [huoBase, lingBase] = HUO_LING[yearZhi] || [1, 10];
+    const huoxingIdx  = (huoBase + hourIdx) % 12;
+    const lingxingIdx = (lingBase + hourIdx) % 12;
 
     return {
         '擎羊': qyIdx,
@@ -3363,7 +3358,7 @@ function calculateChart(lunarYear, lunarMonth, lunarDay, hourIdx, gender, isLeap
     }
 
     // 8. 煞星
-    const shaStars = getShaStars(yearGan, hourIdx);
+    const shaStars = getShaStars(yearGan, hourIdx, yearZhi);
     const dikj = getDiKongJie(hourIdx);
     const badStars = { ...shaStars, ...dikj };
     for (const [star, dzIdx] of Object.entries(badStars)) {
@@ -3379,7 +3374,7 @@ function calculateChart(lunarYear, lunarMonth, lunarDay, hourIdx, gender, isLeap
 
     const daxianList = []; // ordered list of daxian periods
     for (let i = 0; i < 12; i++) {
-        const idx = (mingDzIdx + daxianDir * (i + 1) + 120) % 12;
+        const idx = (mingDzIdx + daxianDir * i + 120) % 12; // 第一大限起於命宮
         const p = palaces.find(pp => pp.dzIdx === idx);
         if (p) {
             const startAge = daxianStart + i * 10;
