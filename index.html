@@ -557,6 +557,11 @@
                     ⚖ 大師級飛星深度理則分析
                 </span>
                 <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">
+                    <button onclick="mfaPlay('expert')"
+                        style="background:linear-gradient(135deg,#5a3000,#b8860b);border:1px solid #d4a843;
+                               color:#fff8e7;font-size:12px;font-weight:700;padding:4px 10px;border-radius:4px;cursor:pointer;">
+                        ▶ 播放動畫
+                    </button>
                     <button onclick="exportExpertText()"
                         style="background:rgba(39,174,96,0.2);border:1px solid rgba(39,174,96,0.4);
                                color:#55efc4;font-size:12px;padding:4px 10px;border-radius:4px;cursor:pointer;">
@@ -5967,7 +5972,7 @@ function mfaOutro(c, s, t, L, d) {
         mfaT(c, '僅供參考', MFA_W / 2, 840, mfaF(900, 110), MFA_COL.cream);
         mfaT(c, '吉凶為規則化評分　趨吉避凶在於行動', MFA_W / 2, 980, mfaF(700, 38), MFA_COL.gold2);
         c.strokeStyle = mfaA(MFA_COL.gold, 0.47); c.lineWidth = 1; c.beginPath(); c.moveTo(300, 1060.5); c.lineTo(780, 1060.5); c.stroke();
-        mfaT(c, `${s.name ? s.name + '・' : ''}${s.fy} ${s.gz}年流月運勢`, MFA_W / 2, 1120, mfaF(400, 34, 'sans'), MFA_COL.dim);
+        mfaT(c, `${s.name ? s.name + '・' : ''}${s.fy} ${s.gz}年${s.title || '流月運勢'}`, MFA_W / 2, 1120, mfaF(400, 34, 'sans'), MFA_COL.dim);
     });
 }
 const MFA_DRAW = { intro: mfaIntro, overview: mfaOverview, month: mfaMonth, summary: mfaSummary, outro: mfaOutro };
@@ -6066,7 +6071,7 @@ function mfaFrame() {
     c.fillStyle = mfaA(MFA_COL.gold, 0.6); c.fillRect(0, MFA_H - 6, MFA_W * p, 6);
     mfa.raf = requestAnimationFrame(mfaFrame);
 }
-async function mfaPlay() {
+async function mfaPlay(kind) {
     if (!chartData) return;
     const tts = 'speechSynthesis' in window;
     if (tts) {   // iOS 需在使用者點擊當下先解鎖語音
@@ -6096,7 +6101,7 @@ async function mfaPlay() {
         document.fonts.load(mfaF(500, 40, 'sans')), document.fonts.load(mfaF(700, 40, 'sans'))]), new Promise(r => setTimeout(r, 2500))]); } catch (e) {}
     if (mfa && mfa.raf) cancelAnimationFrame(mfa.raf);
     const voice = tts ? mfaPickVoice() : null;
-    mfa = { d: mfaBuild(), ctx: document.getElementById('mfaCanvas').getContext('2d'), bg: mfaBG(),
+    mfa = { d: kind === 'expert' ? zfaBuild() : mfaBuild(), ctx: document.getElementById('mfaCanvas').getContext('2d'), bg: mfaBG(),
             tts, voice, rate: parseFloat(document.getElementById('mfaRate').value) || 1, muted: false, gen: 0, si: 0 };
     document.getElementById('mfaNote').textContent = !tts ? '此裝置不支援語音，僅播放字幕'
         : voice ? `旁白聲音：${voice.name}` : '找不到中文語音，將以預設聲音朗讀';
@@ -6125,6 +6130,346 @@ function mfaClose() {
     const w = document.getElementById('mfaWrap'); if (w) w.style.display = 'none';
     document.body.style.overflow = '';
 }
+
+// ================================================================
+//  ★ 飛星分析動畫（沿用流月動畫播放引擎）
+// ================================================================
+function zfaSem(n) { return (ZEP_SEMANTICS[n] || n).replace(/・/g, '、'); }
+function zfaShort(n) { return (n || '').replace('宮', ''); }
+function zfaBuild() {
+    const P = chartData.palaces, fy = parseInt(document.getElementById('flowYear').value);
+    const rawName = document.getElementById('personName')?.value?.trim() || '';
+    const hasName = !!rawName && rawName !== '命主', name = hasName ? rawName : '';
+    const gz = flowYearGan + DI_ZHI[((fy - 4) % 12 + 12) % 12];
+    const bGan = chartData.yearGan, bZhi = chartData.yearZhi, dx = currentDaxian;
+    const fly = gan => computeFly(P, gan) || {};
+    const ok = n => n && n !== '(盤外)';
+    const scenes = [];
+
+    scenes.push({ type: 'zintro', name, fy, gz, lines: [
+        hasName ? `這是命主「${name}」的紫微斗數飛星分析重點。` : '這是紫微斗數飛星分析的重點整理。',
+        `生年是${bGan}${bZhi}，我們來看${fy}年的流年。`] });
+
+    // 三層四化
+    const layers = [{ lab: '生年', s: '生', gan: bGan }];
+    if (dx) layers.push({ lab: '大限', s: '限', gan: dx.gan });
+    layers.push({ lab: '流年', s: '年', gan: flowYearGan });
+    const marks = [], tally = {}, ll = ['首先來看三層四化。'];
+    layers.forEach((l, i) => {
+        const f = fly(l.gan); l.f = f;
+        const parts = [];
+        ['祿', '忌'].forEach(k => {
+            if (!f[k] || !ok(f[k].targetPalace)) return;
+            marks.push({ line: i + 1, tag: l.s + k, k, target: f[k].targetPalace });
+            const key = k + '|' + f[k].targetPalace; tally[key] = (tally[key] || 0) + 1;
+            parts.push(`${k}入${zfaShort(f[k].targetPalace)}`);
+        });
+        ll.push(`${l.lab}是${l.gan}干，${parts.join('、')}。`);
+    });
+    const stack = Object.entries(tally).filter(([, n]) => n >= 2).map(([k, n]) => ({ k: k.split('|')[0], p: k.split('|')[1], n }));
+    stack.sort((a, b) => (a.k === '忌' ? -1 : 1) - (b.k === '忌' ? -1 : 1));
+    if (stack.length) {
+        const s = stack[0];
+        ll.push(`其中${s.p}有${['', '一', '兩', '三'][s.n] || s.n}層化${s.k}疊入，` + (s.k === '忌' ? `${zfaSem(s.p)}是壓力最集中的地方。` : `${zfaSem(s.p)}能量最旺，可以重點把握。`));
+    }
+    scenes.push({ type: 'zlayers', layers, marks, stack, lines: ll });
+
+    // 核心宮位飛化
+    ['命宮', '財帛宮', '官祿宮'].forEach(pn => {
+        const p = P.find(x => x.name === pn); if (!p) return;
+        const f = fly(p.gan);
+        const flies = SH_KEYS.filter(k => f[k] && ok(f[k].targetPalace)).map(k => ({ k, star: f[k].star, target: f[k].targetPalace }));
+        const desc = flies.map(x => x.target === pn ? `${x.star}自化${x.k}` : `化${x.k}入${zfaShort(x.target)}`).join('、');
+        const lu = flies.find(x => x.k === '祿'), ji = flies.find(x => x.k === '忌');
+        let interp;
+        if (ji && ji.target === '命宮' && pn !== '命宮') interp = `化忌回到命宮，${zfaSem(pn)}的事，最後都會回到自己身上。`;
+        else if (lu && ji) interp = `化祿帶給${zfaShort(lu.target)}，也就是${zfaSem(lu.target)}；化忌把壓力落在${zfaShort(ji.target)}，${zfaSem(ji.target)}要多留意。`;
+        else interp = '';
+        const lines = [`${pn}是${p.gan}干，代表${zfaSem(pn)}。`, desc + '。'];
+        if (interp) lines.push(interp);
+        scenes.push({ type: 'zfly', src: p, flies, title: pn.replace('宮', '') + '宮飛化', lines });
+    });
+
+    // 入命力量
+    const into = [];
+    P.forEach(p => {
+        if (p.name === '命宮') return;
+        const f = fly(p.gan);
+        SH_KEYS.forEach(k => { if (f[k] && f[k].targetPalace === '命宮') into.push({ k, from: p.name, star: f[k].star }); });
+    });
+    const intoLines = ['我們接著看，有哪些力量會回到命宮。'];
+    const MEAN = { '祿': '帶來資源與機會', '權': '帶來行動力與主導權', '科': '帶來名聲與貴人', '忌': '把責任與壓力帶回自己身上' };
+    const intoGroups = [];
+    SH_KEYS.forEach(k => {
+        const g = into.filter(x => x.k === k);
+        if (g.length) { intoGroups.push(k); intoLines.push(`${g.map(x => zfaShort(x.from)).join('、')}化${k}入命，${MEAN[k]}；`); }
+    });
+    if (!into.length) intoLines.push('沒有其他宮位飛化入命，凡事要靠自己開創。');
+    else intoLines[intoLines.length - 1] = intoLines[intoLines.length - 1].replace(/；$/, '。');
+    scenes.push({ type: 'zinto', into, groups: intoGroups, lines: intoLines });
+
+    // 矛盾互飛
+    const pairs = [];
+    for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
+        const A = P[i], B = P[j], fA = fly(A.gan), fB = fly(B.gan);
+        if (fA['祿']?.targetPalace === B.name && fB['忌']?.targetPalace === A.name) pairs.push({ a: A.name, b: B.name, kind: 'lu' });
+        else if (fB['祿']?.targetPalace === A.name && fA['忌']?.targetPalace === B.name) pairs.push({ a: B.name, b: A.name, kind: 'lu' });
+    }
+    if (pairs.length) {
+        const ps = pairs.slice(0, 2);
+        scenes.push({ type: 'zconflict', pairs: ps, lines: ['這裡要特別留意結構上的衝突。',
+            ...ps.map(x => `${x.a}化祿給${zfaShort(x.b)}，${x.b}卻化忌回${zfaShort(x.a)}，付出和回報容易不對等。`)] });
+    }
+
+    // 飛入熱度
+    const heat = {}; P.forEach(p => heat[p.name] = { 祿: 0, 權: 0, 科: 0, 忌: 0, n: 0 });
+    P.forEach(p => { const f = fly(p.gan); SH_KEYS.forEach(k => { const tn = f[k]?.targetPalace; if (ok(tn) && heat[tn]) { heat[tn][k]++; heat[tn].n++; } }); });
+    const heatList = P.map(p => ({ name: p.name, ...heat[p.name] })).sort((a, b) => b.n - a.n);
+    const top = heatList[0];
+    const tops = heatList.filter(h => h.n === top.n).slice(0, 2);
+    const topNames = tops.map(h => h.name).join('和');
+    scenes.push({ type: 'zheat', heatList, tops: tops.length, lines: ['把十二宮的飛化落點全部統計起來，',
+        tops.length > 1 ? `${topNames}各被飛入${top.n}次，是整個盤面的焦點。` : `${top.name}總共被飛入${top.n}次，是整個盤面的焦點。`,
+        tops.map(h => `${zfaShort(h.name)}管${zfaSem(h.name)}`).join('，') + '，這方面的事最容易牽動全局。'] });
+
+    // 大限
+    if (dx) {
+        const f = fly(dx.gan); const lu = f['祿'], ji = f['忌'];
+        const lines = [`目前走的大限在${dx.palaceName}，也就是${dx.startAge}到${dx.endAge}歲這十年。`];
+        if (lu && ok(lu.targetPalace)) lines.push(`大限化祿入${zfaShort(lu.targetPalace)}，這十年的機會在${zfaSem(lu.targetPalace)}；`);
+        if (ji && ok(ji.targetPalace)) lines.push(`化忌入${zfaShort(ji.targetPalace)}，${zfaSem(ji.targetPalace)}這方面要避免冒進。`);
+        const src = P.find(p => p.name === dx.palaceName);
+        const flies = SH_KEYS.filter(k => f[k] && ok(f[k].targetPalace)).map(k => ({ k, star: f[k].star, target: f[k].targetPalace }));
+        scenes.push({ type: 'zfly', src, flies, title: '大限飛化', sub: `${dx.palaceName}・${dx.startAge}–${dx.endAge}歲`, dxMode: true, lines });
+    }
+
+    // 總結
+    const yf = fly(flowYearGan);
+    const pts = [[`${tops.map(h => zfaShort(h.name)).join('與')}是核心焦點`, `${tops.map(h => zfaSem(h.name)).join('，')}要多用心經營`, MFA_COL.gold]];
+    if (yf['祿'] && ok(yf['祿'].targetPalace)) pts.push([`流年祿入${zfaShort(yf['祿'].targetPalace)}`, `${zfaSem(yf['祿'].targetPalace)}可以積極把握`, MFA_COL.hua['祿']]);
+    const jiP = stack.find(s => s.k === '忌')?.p || (yf['忌'] && ok(yf['忌'].targetPalace) ? yf['忌'].targetPalace : null);
+    if (jiP) pts.push([stack.find(s => s.k === '忌') ? `${zfaShort(jiP)}疊忌` : `流年忌入${zfaShort(jiP)}`, `${zfaSem(jiP)}要保守應對`, MFA_COL.ver['守成']]);
+    const ord = ['第一', '第二', '第三'];
+    scenes.push({ type: 'zsummary', pts, lines: [`最後幫您總結${pts.length === 3 ? '三' : '兩'}個重點。`,
+        ...pts.map((x, i) => `${ord[i]}，${x[0]}，${x[1]}。`)] });
+    scenes.push({ type: 'outro', name, fy, gz, title: '飛星分析', lines: ['以上分析，提供給您做個參考。'] });
+    return { scenes, name, fy, gz, sub: '飛星分析' };
+}
+
+// ── 繪圖 ──
+function zfaTitle(c, t, title, sub) {
+    const a = mfaRamp(t, 0.05, 0.5);
+    mfaAlpha(c, a, () => {
+        const y = 360 + (1 - a) * 24;
+        mfaT(c, title, MFA_W / 2, y, mfaF(900, 80), MFA_COL.cream);
+        if (sub) mfaT(c, sub, MFA_W / 2, y + 82, mfaF(700, 36), MFA_COL.gold2);
+    });
+}
+function zfaGrid(c, t, hl) {   // hl: { 宮名: 0..1 亮度 }
+    mfaAlpha(c, mfaRamp(t, 0.1, 0.5), () => {
+        for (const dz in MFA_CELL) {
+            const [x, y] = mfaCellBox(dz), p = palaceByDz(chartData.palaces, DI_ZHI.indexOf(dz));
+            const k = p ? (hl[p.name] || 0) : 0;
+            c.fillStyle = mfaMix('#241a11', MFA_COL.gold, 0.32 * k, 0.93); c.fillRect(x + 3, y + 3, MFA_CW - 6, MFA_CH - 6);
+            c.strokeStyle = k > 0.5 ? mfaA(MFA_COL.gold, 0.9) : mfaA(MFA_COL.gold, 0.27); c.lineWidth = k > 0.5 ? 3 : 1;
+            c.strokeRect(x + 3.5, y + 3.5, MFA_CW - 7, MFA_CH - 7);
+            mfaT(c, dz, x + 14, y + 28, mfaF(700, 30), mfaA(MFA_COL.gold, 0.9), 'left');
+            if (!p) continue;
+            mfaT(c, p.name.replace('宮', ''), x + MFA_CW - 14, y + 28, mfaF(700, 26, 'sans'), k > 0.5 ? MFA_COL.gold2 : MFA_COL.dim, 'right');
+            mfaT(c, p.gan + '干', x + MFA_CW - 14, y + 58, mfaF(400, 20, 'sans'), MFA_COL.dim, 'right');
+            if (p.stars.m.length) {
+                let sx = x + 14;
+                p.stars.m.forEach(st => { mfaT(c, st, sx, y + 76, mfaF(700, 32, 'sans'), MFA_COL.cream, 'left'); c.font = mfaF(700, 32, 'sans'); sx += c.measureText(st).width + 14; });
+            } else mfaT(c, '（無主星）', x + 14, y + 76, mfaF(400, 24, 'sans'), mfaA(MFA_COL.dim, 0.8), 'left');
+        }
+        const cx0 = MFA_GX + MFA_CW, cy0 = MFA_GY + MFA_CH;
+        c.fillStyle = 'rgba(20,13,8,0.92)'; c.fillRect(cx0 + 3, cy0 + 3, 2 * MFA_CW - 6, 2 * MFA_CH - 6);
+    });
+}
+function zfaCenter(name) { const p = chartData.palaces.find(x => x.name === name); return p ? mfaCellCenter(p.dz) : [MFA_W / 2, 940]; }
+function zfaBox(name) { const p = chartData.palaces.find(x => x.name === name); return p ? mfaCellBox(p.dz) : null; }
+function zfaCenterText(c, a, l1, l2) {
+    const cx0 = MFA_GX + MFA_CW, cy0 = MFA_GY + MFA_CH;
+    mfaAlpha(c, a, () => {
+        mfaT(c, l1, cx0 + MFA_CW, cy0 + 110, mfaF(900, 50), MFA_COL.cream);
+        if (l2) { c.font = mfaF(400, 28, 'sans'); mfaT(c, mfaWrap(c, l2, 2 * MFA_CW - 40, 1)[0], cx0 + MFA_CW, cy0 + 190, mfaF(400, 28, 'sans'), MFA_COL.dim); }
+    });
+}
+function zfaArrow(c, from, to, f, col, bend, label, lpos = 0.55) {
+    if (f <= 0) return;
+    const [x1, y1] = from, [x2, y2] = to;
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
+    const qx = mx - dy / len * bend, qy = my + dx / len * bend;
+    const pt = u => [(1 - u) * (1 - u) * x1 + 2 * (1 - u) * u * qx + u * u * x2, (1 - u) * (1 - u) * y1 + 2 * (1 - u) * u * qy + u * u * y2];
+    c.save(); c.strokeStyle = col; c.lineWidth = 6; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x1, y1);
+    const N = 28; for (let i = 1; i <= N; i++) { const u = f * i / N; const [px, py] = pt(u); c.lineTo(px, py); }
+    c.stroke();
+    const [ex, ey] = pt(f), [bx, by] = pt(Math.max(0, f - 0.04)), ang = Math.atan2(ey - by, ex - bx);
+    c.fillStyle = col; c.beginPath(); c.moveTo(ex, ey);
+    c.lineTo(ex - 26 * Math.cos(ang - 0.45), ey - 26 * Math.sin(ang - 0.45)); c.lineTo(ex - 26 * Math.cos(ang + 0.45), ey - 26 * Math.sin(ang + 0.45));
+    c.closePath(); c.fill();
+    if (label && f >= 1) {
+        const [lx, ly] = pt(lpos);
+        c.font = mfaF(700, 24, 'sans'); const w = c.measureText(label).width + 22;
+        mfaRR(c, lx - w / 2, ly - 18, w, 36, 18); c.fillStyle = col; c.fill();
+        mfaT(c, label, lx, ly + 1, mfaF(700, 24, 'sans'), '#fff');
+    }
+    c.restore();
+}
+function zfaTag(c, name, slot, txt, col, a) {
+    const b = zfaBox(name); if (!b) return;
+    mfaAlpha(c, a, () => {
+        const [x, y] = b;
+        if (slot === 0) { c.fillStyle = 'rgba(36,26,17,1)'; c.fillRect(x + 4, y + 100, MFA_CW - 8, 44); }
+        mfaRR(c, x + 8 + slot * 77, y + 104, 74, 36, 8); c.fillStyle = col; c.fill();
+        mfaT(c, txt, x + 8 + slot * 77 + 37, y + 122, mfaF(700, 20, 'sans'), '#fff');
+    });
+}
+function zfaRow(c, i, a, chip, chipCol, text) {
+    mfaAlpha(c, a, () => {
+        const y = 1250 + i * 66 + (1 - a) * 16;
+        mfaRR(c, 60, y, 960, 54, 14); c.fillStyle = mfaMix(MFA_COL.ink, chipCol, 0.14, 0.92); c.fill();
+        c.strokeStyle = mfaA(chipCol, 0.7); c.lineWidth = 2; c.stroke();
+        c.font = mfaF(700, 28, 'sans'); const w = Math.max(120, c.measureText(chip).width + 36);
+        mfaRR(c, 60, y, w, 54, 14); c.fillStyle = chipCol; c.fill();
+        mfaT(c, chip, 60 + w / 2, y + 28, mfaF(700, 28, 'sans'), '#fff');
+        c.font = mfaF(500, 28, 'sans');
+        mfaT(c, mfaWrap(c, text, 960 - w - 40, 1)[0], 60 + w + 20, y + 28, mfaF(500, 28, 'sans'), MFA_COL.cream, 'left');
+    });
+}
+function zfaIntro(c, s, t, L, d) {
+    const cx = MFA_W / 2, cy = 800, R = 440;
+    mfaAlpha(c, mfaRamp(t, 0, 0.8), () => {
+        c.strokeStyle = mfaA(MFA_COL.gold, 0.47); c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.stroke();
+        for (let i = 0; i < 4; i++) {   // 四化光點繞行
+            const ang = (t * 18 + i * 90) * Math.PI / 180, k = SH_KEYS[i];
+            const x = cx + (R - 4) * Math.cos(ang), y = cy + (R - 4) * Math.sin(ang);
+            c.beginPath(); c.arc(x, y, 30, 0, Math.PI * 2); c.fillStyle = MFA_COL.hua[k]; c.fill();
+            mfaT(c, k, x, y + 1, mfaF(900, 32), '#fff');
+        }
+    });
+    const k = mfaRamp(t, 0.3, 0.8);
+    mfaAlpha(c, k, () => {
+        const y = cy - 250 + (1 - k) * 40;
+        mfaT(c, '紫微斗數', MFA_W / 2, y + 120, mfaF(700, 52), MFA_COL.gold);
+        mfaT(c, '飛星分析', MFA_W / 2, y + 250, mfaF(900, 128), MFA_COL.cream);
+        mfaT(c, `${chartData.yearGan}${chartData.yearZhi}年生　${s.fy} ${s.gz}流年`, MFA_W / 2, y + 380, mfaF(700, 44), MFA_COL.gold2);
+    });
+    if (s.name) mfaAlpha(c, mfaRamp(t, L[1], 0.6), () => {
+        c.font = mfaF(700, 38); const w = Math.max(420, c.measureText(`命主　${s.name}`).width + 120);
+        mfaRR(c, MFA_W / 2 - w / 2, 1320, w, 80, 40); c.fillStyle = 'rgba(30,20,10,0.7)'; c.fill();
+        c.strokeStyle = mfaA(MFA_COL.gold, 0.63); c.lineWidth = 2; c.stroke();
+        mfaT(c, `命主　${s.name}`, MFA_W / 2, 1360, mfaF(700, 38), MFA_COL.cream);
+    });
+}
+function zfaLayers(c, s, t, L, d) {
+    mfaHeader(c, d, d.sub); zfaTitle(c, t, '三層四化', '體・用・出');
+    const hl = {}; s.stack.forEach(x => hl[x.p] = mfaRamp(t, L[s.lines.length - 1], 0.5));
+    zfaGrid(c, t, hl);
+    zfaCenterText(c, mfaRamp(t, 0.4, 0.5), '祿與忌', '三層落點');
+    const slots = {};
+    s.marks.forEach(m => {
+        const sl = slots[m.target] = (slots[m.target] ?? -1) + 1;
+        zfaTag(c, m.target, sl, m.tag, MFA_COL.hua[m.k], mfaRamp(t, (L[m.line] ?? Infinity) + (m.k === '忌' ? 0.6 : 0.1), 0.35));
+    });
+    s.layers.forEach((l, i) => {
+        const parts = ['祿', '忌'].filter(k => l.f[k]).map(k => `${k}→${l.f[k].targetPalace}`).join('　');
+        zfaRow(c, i, mfaRamp(t, L[i + 1], 0.4), `${l.lab} ${l.gan}`, i === 0 ? '#8a6d3b' : i === 1 && l.lab === '大限' ? '#6b4e9b' : '#2f6f8f', parts);
+    });
+    if (s.stack.length) {
+        const x = s.stack[0];
+        zfaRow(c, s.layers.length, mfaRamp(t, L[s.lines.length - 1], 0.4), `${x.n}層${x.k}`, x.k === '忌' ? MFA_COL.ver['守成'] : MFA_COL.hua['祿'], `疊入【${x.p}】`);
+    }
+}
+function zfaFly(c, s, t, L, d) {
+    mfaHeader(c, d, d.sub); zfaTitle(c, t, s.title, s.sub || `${s.src.name}・${s.src.gan}干`);
+    const hl = {}; hl[s.src.name] = mfaRamp(t, L[0], 0.5);
+    zfaGrid(c, t, hl);
+    zfaCenterText(c, mfaRamp(t, L[0] ?? 0.5, 0.5), s.src.name, zfaSem(s.src.name));
+    const tl = L[1] ?? Infinity, nxt = L[2] ?? (tl + 4), step = Math.max(0.6, (nxt - tl) / (s.flies.length + 0.3));
+    const from = zfaCenter(s.src.name);
+    const cnt = {};
+    s.flies.forEach((fl, i) => {
+        const st = tl + i * step, f = mfaRamp(t, st, 0.7);
+        const n = cnt[fl.target] = (cnt[fl.target] || 0) + 1;
+        if (fl.target === s.src.name) {   // 自化：繞圈
+            const b = zfaBox(fl.target);
+            if (b && f > 0) mfaAlpha(c, f, () => {
+                c.strokeStyle = MFA_COL.hua[fl.k]; c.lineWidth = 5;
+                c.beginPath(); c.arc(b[0] + MFA_CW / 2, b[1] + 20, 26, Math.PI * 0.15, Math.PI * (0.15 + 1.7 * f)); c.stroke();
+            });
+        } else {
+            zfaArrow(c, from, zfaCenter(fl.target), f, MFA_COL.hua[fl.k], 60 + (n - 1) * 70 + i * 12, '化' + fl.k, 0.55 - (n - 1) * 0.2);
+        }
+        zfaRow(c, i, mfaRamp(t, st, 0.4), '化' + fl.k, MFA_COL.hua[fl.k],
+            fl.target === s.src.name ? `${fl.star} 自化${fl.k}（本宮）` : `${fl.star} → ${fl.target}　${zfaSem(fl.target)}`);
+    });
+}
+function zfaInto(c, s, t, L, d) {
+    mfaHeader(c, d, d.sub); zfaTitle(c, t, '入命力量', '他宮飛化入命宮');
+    zfaGrid(c, t, { '命宮': mfaRamp(t, L[0], 0.5) });
+    zfaCenterText(c, mfaRamp(t, 0.4, 0.5), '回到命宮', '自己承接的力量');
+    const to = zfaCenter('命宮');
+    s.groups.forEach((k, gi) => {
+        const st = L[gi + 1] ?? Infinity;
+        const g = s.into.filter(x => x.k === k);
+        g.forEach((x, j) => zfaArrow(c, zfaCenter(x.from), to, mfaRamp(t, st + j * 0.25, 0.7), MFA_COL.hua[k], 70 + j * 40, '化' + k));
+        zfaRow(c, gi, mfaRamp(t, st, 0.4), '化' + k + '入命', MFA_COL.hua[k], g.map(x => `${x.from}（${x.star}）`).join('、'));
+    });
+}
+function zfaConflict(c, s, t, L, d) {
+    mfaHeader(c, d, d.sub); zfaTitle(c, t, '矛盾互飛', '祿往忌來・付出與回報');
+    const hl = {}; s.pairs.forEach((p, i) => { const k = mfaRamp(t, L[i + 1], 0.5); hl[p.a] = Math.max(hl[p.a] || 0, k); hl[p.b] = Math.max(hl[p.b] || 0, k); });
+    zfaGrid(c, t, hl);
+    zfaCenterText(c, mfaRamp(t, 0.4, 0.5), '祿忌交戰', '吉凶反覆');
+    s.pairs.forEach((p, i) => {
+        const st = L[i + 1] ?? Infinity;
+        zfaArrow(c, zfaCenter(p.a), zfaCenter(p.b), mfaRamp(t, st, 0.7), MFA_COL.hua['祿'], 70, '化祿');
+        zfaArrow(c, zfaCenter(p.b), zfaCenter(p.a), mfaRamp(t, st + 0.9, 0.7), MFA_COL.hua['忌'], 70, '化忌');
+        zfaRow(c, i, mfaRamp(t, st, 0.4), `${zfaShort(p.a)} ⇄ ${zfaShort(p.b)}`, '#a0522d', `${p.a}祿→${p.b}，${p.b}忌→${p.a}`);
+    });
+}
+function zfaHeat(c, s, t, L, d) {
+    mfaHeader(c, d, d.sub); zfaTitle(c, t, '飛入熱度', '十二宮四化落點統計');
+    const max = Math.max(1, s.heatList[0].n), x0 = 250, wMax = 700, y0 = 520, rh = 72;
+    s.heatList.forEach((h, i) => {
+        const a = mfaRamp(t, 0.3 + i * 0.12, 0.4), y = y0 + i * rh;
+        const top = i < (s.tops || 1), kk = top ? mfaRamp(t, L[1], 0.5) : 0;
+        mfaAlpha(c, a, () => {
+            mfaT(c, h.name, x0 - 24, y + 26, mfaF(700, 32, 'sans'), top && kk > 0 ? MFA_COL.gold2 : MFA_COL.cream, 'right');
+            let x = x0;
+            SH_KEYS.forEach(k => {
+                const w = wMax * h[k] / max * mfaEase((t - 0.3 - i * 0.12) / 0.8);
+                if (w > 0) { c.fillStyle = MFA_COL.hua[k]; c.fillRect(x, y + 4, w, 44); x += w; }
+            });
+            mfaT(c, String(h.n), x + 16, y + 26, mfaF(700, 30, 'sans'), MFA_COL.gold2, 'left');
+            if (top && kk > 0) { c.strokeStyle = mfaA(MFA_COL.gold, kk); c.lineWidth = 3; mfaRR(c, 40, y - 8, 1000, 68, 14); c.stroke(); }
+        });
+    });
+    let lx = 260;
+    SH_KEYS.forEach(k => {
+        c.fillStyle = MFA_COL.hua[k]; c.fillRect(lx, 1410, 30, 30);
+        mfaT(c, '化' + k, lx + 42, 1426, mfaF(500, 28, 'sans'), MFA_COL.cream, 'left'); lx += 150;
+    });
+}
+function zfaSummary(c, s, t, L, d) {
+    mfaHeader(c, d, d.sub);
+    mfaT(c, `${s.pts.length === 3 ? '三' : '兩'}個重點`, MFA_W / 2, 360, mfaF(900, 78), MFA_COL.cream);
+    s.pts.forEach(([h, txt, cc], i) => {
+        const a = mfaRamp(t, L[i + 1], 0.5);
+        mfaAlpha(c, a, () => {
+            const x = 60 + (1 - a) * 60, y = 480 + i * 300;
+            mfaRR(c, x, y, 960, 260, 24); c.fillStyle = mfaMix(MFA_COL.ink, cc, 0.15, 0.94); c.fill();
+            c.strokeStyle = mfaA(cc, 0.9); c.lineWidth = 3; c.stroke();
+            c.beginPath(); c.arc(x + 94, y + 130, 60, 0, Math.PI * 2); c.fillStyle = cc; c.fill();
+            mfaT(c, String(i + 1), x + 94, y + 132, mfaF(900, 70), '#190e06');
+            c.font = mfaF(900, 50); mfaT(c, mfaWrap(c, h, 740, 1)[0], x + 190, y + 100, mfaF(900, 50), MFA_COL.cream, 'left');
+            c.font = mfaF(500, 34, 'sans'); mfaT(c, mfaWrap(c, txt, 740, 1)[0], x + 190, y + 176, mfaF(500, 34, 'sans'), MFA_COL.dim, 'left');
+        });
+    });
+}
+Object.assign(MFA_DRAW, { zintro: zfaIntro, zlayers: zfaLayers, zfly: zfaFly, zinto: zfaInto, zconflict: zfaConflict, zheat: zfaHeat, zsummary: zfaSummary });
 
 function mfOpen(n) {
     const el = document.getElementById('mf-m' + n);
