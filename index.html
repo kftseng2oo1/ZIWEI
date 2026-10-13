@@ -272,6 +272,74 @@
         .card p { font-size: 12px; line-height: 1.9; color: #444; }
         .card .note { font-size: 10px; color: #999; font-style: italic; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #eee; }
 
+
+        /* === 流年逐月運勢 === */
+        #monthlyFortune { margin-top: 22px; }
+        .mf-head { margin-bottom: 12px; }
+        .mf-title { font-family:"Noto Serif TC",serif; color:var(--gold-light); font-weight:700; font-size:1em; letter-spacing:2px; }
+        .mf-sub { font-size:11px; color:#b9a988; margin-top:4px; line-height:1.6; }
+        .mf-sub b { color:var(--gold-light); }
+        .mf-strip { display:grid; grid-template-columns:repeat(12,1fr); gap:5px; margin-bottom:10px; }
+        .mf-chip { border:1px solid rgba(184,134,11,0.3); border-radius:6px; padding:6px 2px; cursor:pointer;
+                   display:flex; flex-direction:column; align-items:center; gap:2px; font-family:inherit;
+                   background:rgba(247,243,233,0.92); color:var(--ink); -webkit-tap-highlight-color:transparent; }
+        .mf-chip-m { font-size:11px; font-weight:700; }
+        .mf-chip-v { font-size:12px; font-weight:700; }
+        .mf-chip-p { font-size:10px; opacity:.7; }
+        .mf-chip.mf-dj { background:#f6e3a1; border-color:var(--lu); }
+        .mf-chip.mf-j  { background:#fbf0cf; }
+        .mf-chip.mf-x  { background:#e9dcd4; }
+        .mf-chip.mf-dx { background:#d9c7c0; border-color:#7a1f1f; }
+        .mf-chip.mf-dj .mf-chip-v, .mf-chip.mf-j .mf-chip-v { color:#9a6b00; }
+        .mf-chip.mf-x .mf-chip-v, .mf-chip.mf-dx .mf-chip-v { color:#7a1f1f; }
+        .mf-chip.mf-now { outline:2px solid var(--gold-light); outline-offset:1px; }
+        .mf-keys { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:12px; color:#e8dcc8; margin-bottom:12px; }
+        .mf-keys b { color:var(--gold-light); }
+        .mf-month { background:rgba(247,243,233,0.96); border-radius:7px; border-left:5px solid var(--gold);
+                    margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.12); overflow:hidden; }
+        .mf-month.mf-dj { border-left-color:var(--lu); }
+        .mf-month.mf-x  { border-left-color:#a0522d; }
+        .mf-month.mf-dx { border-left-color:#7a1f1f; }
+        .mf-month summary { list-style:none; cursor:pointer; padding:11px 14px; display:flex; flex-wrap:wrap;
+                            align-items:center; gap:6px 10px; font-size:13px; color:var(--ink); }
+        .mf-month summary::-webkit-details-marker { display:none; }
+        .mf-month summary::after { content:'▼'; font-size:11px; color:#aaa; margin-left:auto; transition:transform .25s; }
+        .mf-month[open] summary::after { transform:rotate(180deg); color:var(--gold); }
+        .mf-badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; background:#efe6cf; }
+        .mf-dj .mf-badge, .mf-j .mf-badge { background:#f6e3a1; color:#7a5200; }
+        .mf-x .mf-badge, .mf-dx .mf-badge { background:#ecd5cf; color:#7a1f1f; }
+        .mf-meta { font-size:11px; color:#777; }
+        .mf-nowtag { font-size:10px; background:var(--vermillion); color:#fff; padding:1px 6px; border-radius:8px; }
+        .mf-body { background:#fff; padding:12px 14px 14px; border-top:1px solid #ece8de; font-size:12px; line-height:1.8; color:#444; }
+        .mf-theme { margin-bottom:6px; }
+        .mf-sec { font-weight:700; color:var(--azure); margin:10px 0 4px; font-size:12px; }
+        .mf-pos { display:flex; flex-wrap:wrap; align-items:center; gap:4px; padding:3px 0; border-bottom:1px dashed #eee; }
+        .mf-pos-l { min-width:120px; font-weight:700; color:#555; font-size:11.5px; }
+        .mf-pos-l small { font-weight:400; color:#999; margin-left:4px; }
+        .mf-star { display:inline-flex; align-items:baseline; gap:1px; padding:0 5px; border-radius:3px; font-weight:700; background:#f3efe4; }
+        .mf-star small { font-size:9px; font-weight:400; margin-left:1px; }
+        .mf-star.mf-b1 { color:#9a6b00; background:#fbf0cf; }
+        .mf-star.mf-b-1 { color:#888; background:#f0eeea; }
+        .mf-lucky { color:var(--jade); font-size:11px; padding:0 4px; border:1px solid rgba(14,102,85,.3); border-radius:3px; }
+        .mf-sha { color:#7a1f1f; font-size:11px; padding:0 4px; border:1px solid rgba(122,31,31,.3); border-radius:3px; }
+        .mf-empty { color:#aaa; font-size:11px; }
+        .mf-hit { border-left:3px solid; padding:3px 8px; margin:4px 0; background:#faf8f2; }
+        .mf-nat { color:#666; font-size:11.5px; }
+        .mf-act { color:var(--jade); font-weight:500; }
+        .mf-none, .mf-note { color:#666; padding:2px 0; }
+        .mf-note::before { content:'◇ '; color:var(--vermillion); }
+        .mf-advice { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+        .mf-yi, .mf-ji { border-radius:6px; padding:8px 10px; }
+        .mf-yi { background:#eef6f1; } .mf-yi b { color:var(--jade); }
+        .mf-ji { background:#f8ecea; } .mf-ji b { color:#7a1f1f; }
+        .mf-advice ul { margin:4px 0 0 16px; }
+        .mf-foot { font-size:10px; color:#9c8f75; margin-top:8px; line-height:1.6; }
+        @media(max-width:700px) {
+            .mf-strip { grid-template-columns:repeat(6,1fr); }
+            .mf-advice { grid-template-columns:1fr; }
+            .mf-pos-l { min-width:100%; }
+        }
+
         @media(max-width:900px) {
             .chart { grid-template-rows:repeat(4,minmax(150px,1fr)); }
             .star-item { font-size:11px; } .star-item.main { font-size:12px; }
@@ -387,6 +455,8 @@
         </div>
         <div class="summary-box" id="quickSummary" style="display:none;"></div>
         <div class="report-grid" id="reportGrid"></div>
+        <!-- ▼ 流年逐月運勢 ▼ -->
+        <div id="monthlyFortune" style="display:none;"></div>
         <!-- AI 大師分析輸出區 -->
         <div id="aiMasterWrap" style="display:none;margin-top:24px;">
             <div style="border:1px solid rgba(155,89,182,0.4);border-radius:10px;
@@ -4950,9 +5020,8 @@ function renderReport() {
             const bHour   = chartData.hourIdx    || 0;
             // 流年地支宮（寅=2為固定起點，各流年地支對應 dzIdx）
             const YEAR_DZ_IDX = { '子':0,'丑':1,'寅':2,'卯':3,'辰':4,'巳':5,'午':6,'未':7,'申':8,'酉':9,'戌':10,'亥':11 };
-            const flowYearDzIdx = YEAR_DZ_IDX[chartData.yearZhi] ?? 6; // 預設午
-            // 斗君 dzIdx = (流年地支 - 生月 + 生時 + 24) % 12
-            const douGunDzIdx = ((flowYearDzIdx - (bMonth - 1) + bHour) % 12 + 12) % 12;
+            // 斗君以「流年」地支起算（原誤用生年地支）
+            const douGunDzIdx = getDouJunDzIdx(parseInt(document.getElementById('flowYear').value));
 
             // 月份名稱對照
             const MON_NAMES = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
@@ -5109,6 +5178,299 @@ function renderReport() {
             </div>
         </div>`;
     }).join('');
+
+    renderMonthlyFortune();
+}
+
+// ================================================================
+//  ★ 流年逐月運勢（流月 1–12 月）
+//  斗君定流月命宮 → 取三方四正（本宮・對宮・三合二宮）
+//  評估：主星廟陷、六吉／六煞、生年・大限・流年・流月四化落點
+// ================================================================
+
+// 十四主星廟旺利陷（常見版本，地支序：子丑寅卯辰巳午未申酉戌亥）
+const MF_BRIGHT = {
+    '紫微': ['平','廟','廟','旺','得','旺','廟','廟','旺','平','得','旺'],
+    '天機': ['廟','陷','得','旺','利','平','廟','陷','得','旺','利','平'],
+    '太陽': ['陷','陷','旺','廟','旺','旺','旺','得','閒','閒','陷','陷'],
+    '武曲': ['旺','廟','得','利','廟','平','旺','廟','得','利','廟','平'],
+    '天同': ['旺','陷','利','平','平','廟','陷','陷','旺','平','平','廟'],
+    '廉貞': ['平','利','廟','平','利','陷','平','利','廟','平','利','陷'],
+    '天府': ['廟','廟','廟','得','廟','得','旺','廟','得','旺','廟','得'],
+    '太陰': ['廟','廟','旺','陷','陷','陷','陷','利','利','旺','旺','廟'],
+    '貪狼': ['旺','廟','平','利','廟','陷','旺','廟','平','利','廟','陷'],
+    '巨門': ['旺','陷','廟','廟','陷','旺','旺','陷','廟','廟','陷','旺'],
+    '天相': ['廟','廟','廟','陷','得','得','廟','得','廟','陷','得','得'],
+    '天梁': ['廟','旺','廟','廟','旺','陷','廟','旺','陷','得','旺','陷'],
+    '七殺': ['旺','廟','廟','陷','旺','平','旺','廟','廟','陷','廟','平'],
+    '破軍': ['廟','旺','得','陷','旺','平','廟','旺','得','陷','旺','平'],
+};
+function mfBrightLevel(word) {
+    if (word === '廟' || word === '旺') return 1;
+    if (word === '陷' || word === '閒') return -1;
+    return 0;
+}
+const MF_LUCKY = ['左輔','右弼','文昌','文曲','天魁','天鉞','祿存'];
+const MF_SHA   = ['擎羊','陀羅','火星','鈴星','地空','地劫'];
+const MF_MON   = ['正','二','三','四','五','六','七','八','九','十','十一','十二'];
+
+// 三方四正位置（以流月命宮為基準；地支差值 → 流月宮位角色）
+const MF_POS = [
+    { off: 0, role: '本宮', label: '流月命宮', mul: 1.0 },
+    { off: 6, role: '對宮', label: '流月遷移', mul: 0.6 },
+    { off: 8, role: '財位', label: '流月財帛', mul: 0.7 },
+    { off: 4, role: '官位', label: '流月官祿', mul: 0.7 },
+];
+
+// 四化層級權重
+const MF_LAYER_W = { '生年': 0.5, '大限': 0.7, '流年': 1.0, '流月': 1.0 };
+
+// 四化 × 位置 → 行動建議
+const MF_HUA_ACT = {
+    '祿': {
+        '本宮': '機會由自身開展，主動提案、爭取曝光，把握順勢。',
+        '對宮': '機緣來自外部與他人，多外出、拜訪、參加聚會。',
+        '財位': '財源有進，適合收款、談價、推出產品或小幅布局。',
+        '官位': '工作有成果，推進專案、爭取表現，努力能被看見。',
+    },
+    '權': {
+        '本宮': '主導力強，可承擔責任、拍板決策，但避免強勢壓人。',
+        '對宮': '外部有競爭或強勢對手，宜整合資源、以實力爭取。',
+        '財位': '財務掌控力增強，可重新配置預算、主導談判。',
+        '官位': '適合爭取職權、主導專案，執行力強、宜設定明確目標。',
+    },
+    '科': {
+        '本宮': '貴人緣佳、形象加分，適合學習進修、發表與建立口碑。',
+        '對宮': '外地或他人帶來貴人與資訊，遇事多請教專業人士。',
+        '財位': '理財穩健有條理，可做規劃、記帳、整理保單文件。',
+        '官位': '利考試、證照、文書與企劃，工作有名聲與肯定。',
+    },
+    '忌': {
+        '本宮': '自身壓力與執念重，少做承諾、勿衝動決定，多休息調節。',
+        '對宮': '忌沖本宮，外來變數干擾，出行交通、合作對象皆需謹慎。',
+        '財位': '財務易破耗或周轉吃緊，避免借貸、擔保與投機。',
+        '官位': '工作易卡關、溝通誤解，文件留底、重要決策延後。',
+    },
+};
+
+// 流月命宮落入本命各宮時的主題與宜忌
+const MF_DOMAIN = {
+    '命宮':   { theme: '自身狀態與個人抉擇', up: '適合為自己設定新目標、展開新計畫。', down: '凡事保守，避免意氣用事與重大轉換。' },
+    '兄弟宮': { theme: '手足、同儕與現金流', up: '可與同事、手足合作，資金周轉順暢。', down: '勿替人作保或借錢，同儕間易有摩擦。' },
+    '夫妻宮': { theme: '感情、配偶與合夥', up: '感情升溫，適合約會、旅行或確認合作關係。', down: '多傾聽少爭辯，合夥協議宜白紙黑字。' },
+    '子女宮': { theme: '子女、部屬與創作投資', up: '利於帶人、教學、創作，與子女互動佳。', down: '注意子女與部屬狀況，勿做高風險投資。' },
+    '財帛宮': { theme: '收入與理財', up: '把握進財機會，可收款、議價、增加收入來源。', down: '嚴控支出、勿投機，守住現金為上。' },
+    '疾厄宮': { theme: '健康與身心狀態', up: '體能尚佳，適合安排健檢、養成運動習慣。', down: '作息規律、避免過勞，身體不適及早就醫。' },
+    '遷移宮': { theme: '外出、交際與外部環境', up: '宜外出拓展、出差旅行，在外得助。', down: '出行注意交通安全，對外合作多加確認。' },
+    '交友宮': { theme: '朋友、人脈與客戶', up: '人脈帶來機會，適合社交、拓展客源。', down: '慎防小人與人情債，借貸往來宜避免。' },
+    '官祿宮': { theme: '事業與工作表現', up: '工作能見度高，適合爭取升遷、推動計畫。', down: '工作壓力大，先求穩定，勿輕率換工作。' },
+    '田宅宮': { theme: '家庭、居家與不動產', up: '適合整理居家、看屋簽約或家族聚會。', down: '房產交易與修繕延後，注意家中漏水電器。' },
+    '福德宮': { theme: '精神、心情與享受', up: '心情愉快，適合休閒、充電、培養興趣。', down: '情緒易起伏、睡眠欠佳，避免衝動消費。' },
+    '父母宮': { theme: '長輩、上司與文書', up: '得長輩上司提攜，文書契約辦理順利。', down: '多關心長輩健康，與上司溝通宜委婉，文件仔細核對。' },
+};
+
+function mfVerdict(score) {
+    if (score >= 3)    return { key: 'dj', text: '大吉', icon: '🌟' };
+    if (score >= 1.2)  return { key: 'j',  text: '吉',   icon: '🎯' };
+    if (score > -1.2)  return { key: 'p',  text: '平',   icon: '⚖️' };
+    if (score > -3)    return { key: 'x',  text: '小心', icon: '⚠️' };
+    return               { key: 'dx', text: '守成', icon: '🛡️' };
+}
+
+/** 斗君（流年正月所在地支）：流年太歲宮起正月，逆數至生月，再順數至生時 */
+function getDouJunDzIdx(flowWesternYear) {
+    const flowZhiIdx = ((flowWesternYear - 4) % 12 + 12) % 12;
+    const bMonth = chartData.lunarMonth || 1;
+    const bHour  = chartData.hourIdx || 0;
+    return ((flowZhiIdx - (bMonth - 1) + bHour) % 12 + 12) % 12;
+}
+
+/** 計算單一流月 */
+function analyzeFlowMonth(n, douJun, fy) {
+    const palaces = chartData.palaces;
+    const dz = (douJun + n - 1) % 12;
+    const mingP = palaceByDz(palaces, dz);
+    const mGan = getPalaceGan(flowYearGan, (n + 1) % 12);   // 流月天干（五虎遁：正月建寅）
+    let score = 0;
+    const notes = [];
+
+    // 三方四正星曜
+    const posInfo = MF_POS.map(pos => {
+        const pdz = (dz + pos.off) % 12;
+        const p = palaceByDz(palaces, pdz);
+        const mains = (p ? p.stars.m : []).map(s => {
+            const w = MF_BRIGHT[s] ? MF_BRIGHT[s][pdz] : '';
+            const lv = mfBrightLevel(w);
+            score += lv * 0.8 * pos.mul;
+            return { s, w, lv };
+        });
+        const lucky = (p ? p.stars.a : []).filter(s => MF_LUCKY.includes(s));
+        const sha   = (p ? p.stars.b : []).filter(s => MF_SHA.includes(s));
+        score += lucky.length * 0.6 * pos.mul;
+        score -= sha.length * 0.8 * pos.mul;
+        return { ...pos, dz: pdz, palace: p, mains, lucky, sha };
+    });
+    if (!posInfo[0].mains.length) {
+        score -= 0.3;
+        notes.push('流月命宮無主星，借對宮主星論，本月易受外在環境牽動。');
+    }
+
+    // 四化落點（四層）
+    const layers = [['生年', chartData.yearGan]];
+    if (currentDaxian) layers.push(['大限', currentDaxian.gan]);
+    layers.push(['流年', flowYearGan], ['流月', mGan]);
+
+    const hits = [];
+    layers.forEach(([layer, gan]) => {
+        const fly = computeFly(palaces, gan);
+        if (!fly) return;
+        SH_KEYS.forEach(k => {
+            const tp = palaces.find(p => p.name === fly[k].targetPalace);
+            if (!tp) return;
+            const pos = posInfo.find(pi => pi.dz === tp.dzIdx);
+            if (!pos) return;
+            const lw = MF_LAYER_W[layer];
+            let d;
+            if (k === '忌') d = pos.role === '本宮' ? -2 : pos.role === '對宮' ? -2.2 : -1.2;
+            else d = (k === '祿' ? 1.5 : 1) * pos.mul;
+            score += d * lw;
+            hits.push({ layer, k, star: fly[k].star, pos, palaceName: tp.name });
+        });
+    });
+
+    // 疊忌、忌煞交沖、祿忌同宮
+    const jiHits = hits.filter(h => h.k === '忌');
+    if (jiHits.length >= 2) {
+        score -= 0.8;
+        notes.push(`疊忌：${jiHits.map(h => h.layer + '忌').join('、')}同聚三方四正，壓力疊加，本月宜守不宜攻。`);
+    }
+    jiHits.forEach(h => {
+        if ((h.pos.role === '本宮' || h.pos.role === '對宮') && h.pos.sha.length) {
+            score -= 0.5;
+            notes.push(`${h.layer}忌入${h.pos.label}又逢${h.pos.sha.join('、')}，忌煞交沖，防意外、口舌與破耗。`);
+        }
+    });
+    posInfo.forEach(pi => {
+        const here = hits.filter(h => h.pos === pi);
+        if (here.some(h => h.k === '祿') && here.some(h => h.k === '忌')) {
+            notes.push(`${pi.label}祿忌同宮：有得有失，先得後失或得之有代價，見好就收。`);
+        }
+    });
+
+    const verdict = mfVerdict(score);
+    return { n, dz, mingP, mGan, posInfo, hits, notes, score, verdict };
+}
+
+function mfHuaColor(k) {
+    return { '祿': 'var(--lu)', '權': 'var(--quan)', '科': 'var(--ke)', '忌': '#7a1f1f' }[k];
+}
+
+function renderMonthlyFortune() {
+    const box = document.getElementById('monthlyFortune');
+    if (!box || !chartData) return;
+    const fy = parseInt(document.getElementById('flowYear').value);
+    if (!fy) { box.style.display = 'none'; return; }
+    const douJun = getDouJunDzIdx(fy);
+    const months = Array.from({ length: 12 }, (_, i) => analyzeFlowMonth(i + 1, douJun, fy));
+
+    // 今日所在農曆月（同一流年才標示）
+    let curMonth = 0;
+    try {
+        const t = new Date();
+        const L = solarToLunar(t.getFullYear(), t.getMonth() + 1, t.getDate());
+        if (L.year === fy) curMonth = L.month;
+    } catch (e) {}
+
+    const flowZhi = DI_ZHI[((fy - 4) % 12 + 12) % 12];
+    const best = [...months].sort((a, b) => b.score - a.score).slice(0, 3).sort((a, b) => a.n - b.n);
+    const worst = [...months].sort((a, b) => a.score - b.score).slice(0, 3).sort((a, b) => a.n - b.n);
+
+    let html = `<div class="mf-head">
+        <div class="mf-title">📆 ${fy}年（${flowYearGan}${flowZhi}）流月逐月運勢</div>
+        <div class="mf-sub">斗君在<b>${DI_ZHI[douJun]}</b>（正月流月命宮）・依流月命宮三方四正之主星廟陷、吉煞星與生年／大限／流年／流月四化評估・月份為農曆</div>
+    </div>`;
+
+    // 12 月總覽條
+    html += '<div class="mf-strip">' + months.map(m =>
+        `<button class="mf-chip mf-${m.verdict.key}${m.n === curMonth ? ' mf-now' : ''}" onclick="mfOpen(${m.n})">
+            <span class="mf-chip-m">${MF_MON[m.n - 1]}月</span>
+            <span class="mf-chip-v">${m.verdict.text}</span>
+            <span class="mf-chip-p">${m.mingP ? m.mingP.name.replace('宮', '') : ''}</span>
+        </button>`).join('') + '</div>';
+
+    html += `<div class="mf-keys">
+        <div>🎯 <b>可積極月份</b>：${best.map(m => MF_MON[m.n - 1] + '月').join('、')}</div>
+        <div>🛡️ <b>宜保守月份</b>：${worst.map(m => MF_MON[m.n - 1] + '月').join('、')}</div>
+    </div>`;
+
+    // 逐月詳細
+    html += months.map(m => {
+        const dom = MF_DOMAIN[m.mingP ? m.mingP.name : ''] || { theme: '', up: '', down: '' };
+        const pos0 = m.posInfo[0];
+
+        const starLines = m.posInfo.map(pi => {
+            const mains = pi.mains.length
+                ? pi.mains.map(x => `<span class="mf-star mf-b${x.lv}">${x.s}${x.w ? '<small>' + x.w + '</small>' : ''}</span>`).join('')
+                : '<span class="mf-empty">（無主星）</span>';
+            const lucky = pi.lucky.map(s => `<span class="mf-lucky">${s}</span>`).join('');
+            const sha = pi.sha.map(s => `<span class="mf-sha">${s}</span>`).join('');
+            return `<div class="mf-pos"><span class="mf-pos-l">${pi.label}<small>${pi.dz !== undefined ? DI_ZHI[pi.dz] : ''}・本命${pi.palace ? pi.palace.name : ''}</small></span>${mains}${lucky}${sha}</div>`;
+        }).join('');
+
+        const order = { '流月': 0, '流年': 1, '大限': 2, '生年': 3 };
+        const hitLines = m.hits.length ? [...m.hits].sort((a, b) => order[a.layer] - order[b.layer]).map(h => {
+            const nat = zepNature(h.star, h.k).n;
+            return `<div class="mf-hit" style="border-left-color:${mfHuaColor(h.k)}">
+                <b style="color:${mfHuaColor(h.k)}">${h.layer}${h.k}</b>　${h.star}入${h.pos.label}（本命${h.palaceName}）
+                ${nat ? `<div class="mf-nat">${nat}</div>` : ''}
+                <div class="mf-act">➤ ${MF_HUA_ACT[h.k][h.pos.role]}</div>
+            </div>`;
+        }).join('') : '<div class="mf-none">三方四正未受四化引動，本月以星曜本質論，平穩行事。</div>';
+
+        // 宜／忌
+        const yi = [], ji = [];
+        if (m.score > -1.2 && dom.up) yi.push(dom.up);
+        if (m.score < 1.2 && dom.down) ji.push(dom.down);
+        const firstPos = m.hits.find(h => h.k === '祿' || h.k === '權' || h.k === '科');
+        if (firstPos && !yi.includes(MF_HUA_ACT[firstPos.k][firstPos.pos.role])) yi.push(MF_HUA_ACT[firstPos.k][firstPos.pos.role]);
+        const firstJi = m.hits.find(h => h.k === '忌');
+        if (firstJi) ji.push(MF_HUA_ACT['忌'][firstJi.pos.role]);
+        if (pos0.lucky.length && !yi.length) yi.push(`${pos0.lucky.join('、')}守命，有貴人可依，遇事多請託協助。`);
+        if (pos0.sha.length) ji.push(`${pos0.sha.join('、')}入流月命宮，性急易衝動，防口角、受傷與破財。`);
+        if (!yi.length) yi.push('按部就班、維持既有節奏，累積實力。');
+        if (!ji.length) ji.push('無明顯凶象，留意細節即可。');
+
+        return `<details class="mf-month mf-${m.verdict.key}" id="mf-m${m.n}"${m.n === curMonth ? ' open' : ''}>
+            <summary>
+                <span class="mf-badge">${m.verdict.icon} ${m.verdict.text}</span>
+                <b>農曆${MF_MON[m.n - 1]}月</b>
+                <span class="mf-meta">${m.mGan}干・流月命宮在${DI_ZHI[m.dz]}（本命${m.mingP ? m.mingP.name : ''}）</span>
+                ${m.n === curMonth ? '<span class="mf-nowtag">本月</span>' : ''}
+            </summary>
+            <div class="mf-body">
+                <div class="mf-theme">本月重心：<b>${dom.theme}</b></div>
+                <div class="mf-sec">◆ 三方四正星曜</div>${starLines}
+                <div class="mf-sec">◆ 四化引動</div>${hitLines}
+                ${m.notes.length ? `<div class="mf-sec">◆ 特殊格局</div>` + m.notes.map(t => `<div class="mf-note">${t}</div>`).join('') : ''}
+                <div class="mf-advice">
+                    <div class="mf-yi"><b>✅ 宜</b><ul>${yi.map(t => `<li>${t}</li>`).join('')}</ul></div>
+                    <div class="mf-ji"><b>⛔ 忌</b><ul>${ji.map(t => `<li>${t}</li>`).join('')}</ul></div>
+                </div>
+            </div>
+        </details>`;
+    }).join('');
+
+    html += '<div class="mf-foot">※ 吉凶分數為規則化參考：主星廟旺加分、陷地減分；六吉加分、六煞減分；四化祿權科加分、化忌減分（本宮／對宮最重）。流月四化採流月天干（正月建寅，五虎遁）。廟旺表各派略有出入。</div>';
+
+    box.innerHTML = html;
+    box.style.display = '';
+}
+
+function mfOpen(n) {
+    const el = document.getElementById('mf-m' + n);
+    if (!el) return;
+    el.open = true;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function buildCross(palaces) {
@@ -5820,6 +6182,15 @@ function buildAIContext() {
     const personName = document.getElementById('personName')?.value?.trim()||'命主';
     const gender = document.getElementById('gender')?.value==='M'?'男命':'女命';
     const mingStars = [...(mingPalace?.stars?.m||[])].join('、')||'（空宮）';
+    let monthInfo = '';
+    try {
+        const dj = getDouJunDzIdx(fy);
+        monthInfo = '\n流月概況（斗君在' + DI_ZHI[dj] + '）：\n' + Array.from({length:12}, (_, i) => {
+            const m = analyzeFlowMonth(i + 1, dj, fy);
+            const hits = m.hits.map(h => h.layer + h.k + '(' + h.star + '入' + h.pos.label + ')').join('、') || '無四化引動';
+            return MF_MON[i] + '月：流月命宮在本命' + (m.mingP ? m.mingP.name : '?') + '，' + m.mGan + '干，評等' + m.verdict.text + '；' + hits;
+        }).join('\n') + '\n';
+    } catch (e) {}
     return `你是精通曾氏紫微斗數飛星四化理則的命理大師，擅長三層體用出（生年・大限・流年）深度分析。
 以下是命主的完整命盤，請在整個對話過程中始終根據此命盤回答所有問題：
 
@@ -5835,7 +6206,7 @@ ${dxInfo}
 
 流年：${fy}年（${fyGan}${fyZhi}年）
 流年四化：祿=${fySh.祿||'?'} 權=${fySh.權||'?'} 科=${fySh.科||'?'} 忌=${fySh.忌||'?'}
-
+${monthInfo}
 請以古典命理大師口吻回答，繁體中文，論斷精準直接，每次回答控制在300字以內。`;
 }
 
