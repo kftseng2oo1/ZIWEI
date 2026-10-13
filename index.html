@@ -5286,7 +5286,6 @@ const MF_DOMAIN = {
 };
 
 function mfVerdict(score) {
-    if (score >= 3)    return { key: 'dj', text: '大吉', icon: '🌟' };
     if (score >= 1.2)  return { key: 'j',  text: '吉',   icon: '🎯' };
     if (score > -1.2)  return { key: 'p',  text: '平',   icon: '⚖️' };
     if (score > -3)    return { key: 'x',  text: '小心', icon: '⚠️' };
