@@ -292,6 +292,14 @@
         .mfa-bar button, .mfa-bar select { background:rgba(212,168,67,0.15); border:1px solid rgba(212,168,67,0.45); color:#f0d090;
                     font-size:18px; min-width:46px; height:42px; border-radius:21px; cursor:pointer; font-family:inherit; -webkit-tap-highlight-color:transparent; }
         .mfa-bar select { font-size:15px; padding:0 10px; }
+        .mfa-gate { position:fixed; inset:0; z-index:10000; background:rgba(10,6,3,0.92); display:flex; align-items:center; justify-content:center; }
+        .mfa-gate-box { text-align:center; padding:30px 24px; border:1px solid rgba(212,168,67,0.5); border-radius:16px; background:#1a1008; max-width:340px; width:86%; }
+        .mfa-gate-sub { color:#d4a843; font-family:"Noto Serif TC",serif; letter-spacing:4px; }
+        .mfa-gate-title { color:#f3e9d2; font-family:"Noto Serif TC",serif; font-weight:900; font-size:40px; margin:6px 0 8px; }
+        .mfa-gate-info { color:#f0d090; margin-bottom:22px; }
+        .mfa-gate-btn { background:linear-gradient(135deg,#5a3000,#b8860b); border:1px solid #d4a843; color:#fff8e7; font-size:18px; font-weight:700;
+                        padding:12px 22px; border-radius:26px; cursor:pointer; font-family:inherit; }
+        .mfa-gate-skip { color:rgba(240,208,144,0.55); font-size:12px; margin-top:14px; cursor:pointer; text-decoration:underline; }
         .mfa-note { color:rgba(240,208,144,0.55); font-size:11px; margin-top:6px; min-height:14px; }
         .mf-sub { font-size:11px; color:#b9a988; margin-top:4px; line-height:1.6; }
         .mf-sub b { color:var(--gold-light); }
@@ -6089,6 +6097,7 @@ async function mfaPlay(kind) {
                     <option value="0.85">慢</option><option value="1" selected>正常</option><option value="1.2">快</option>
                 </select>
                 <button id="mfaMuteBtn" onclick="mfaToggleMute()" aria-label="靜音">🔊</button>
+                <button onclick="mfaShare()" aria-label="分享">🔗</button>
                 <button onclick="mfaClose()" aria-label="關閉">✕</button>
             </div>
             <div class="mfa-note" id="mfaNote"></div>`;
@@ -6101,7 +6110,7 @@ async function mfaPlay(kind) {
         document.fonts.load(mfaF(500, 40, 'sans')), document.fonts.load(mfaF(700, 40, 'sans'))]), new Promise(r => setTimeout(r, 2500))]); } catch (e) {}
     if (mfa && mfa.raf) cancelAnimationFrame(mfa.raf);
     const voice = tts ? mfaPickVoice() : null;
-    mfa = { d: kind === 'expert' ? zfaBuild() : mfaBuild(), ctx: document.getElementById('mfaCanvas').getContext('2d'), bg: mfaBG(),
+    mfa = { kind: kind === 'expert' ? 'expert' : 'month', d: kind === 'expert' ? zfaBuild() : mfaBuild(), ctx: document.getElementById('mfaCanvas').getContext('2d'), bg: mfaBG(),
             tts, voice, rate: parseFloat(document.getElementById('mfaRate').value) || 1, muted: false, gen: 0, si: 0 };
     document.getElementById('mfaNote').textContent = !tts ? '此裝置不支援語音，僅播放字幕'
         : voice ? `旁白聲音：${voice.name}` : '找不到中文語音，將以預設聲音朗讀';
@@ -6470,6 +6479,49 @@ function zfaSummary(c, s, t, L, d) {
     });
 }
 Object.assign(MFA_DRAW, { zintro: zfaIntro, zlayers: zfaLayers, zfly: zfaFly, zinto: zfaInto, zconflict: zfaConflict, zheat: zfaHeat, zsummary: zfaSummary });
+
+// ── 動畫分享：把排盤資料編進網址，對方開啟即可播放 ──
+function mfaShareUrl(kind) {
+    const v = id => document.getElementById(id).value;
+    const q = new URLSearchParams({ play: kind, y: v('solarYear'), m: v('solarMonth'), d: v('solarDay'), h: v('birthHour'), g: v('gender'), fy: v('flowYear') });
+    const n = v('personName').trim(); if (n) q.set('n', n);
+    return location.origin + location.pathname + '?' + q.toString();
+}
+async function mfaShare() {
+    const kind = mfa ? mfa.kind : 'month';
+    const url = mfaShareUrl(kind);
+    const n = document.getElementById('personName').value.trim();
+    const fy = document.getElementById('flowYear').value;
+    const title = `${n ? n + ' ' : ''}${fy}年${kind === 'expert' ? '飛星分析' : '流月運勢'}動畫`;
+    if (navigator.share) {
+        try { await navigator.share({ title, text: `${title}（點開後按播放，有旁白）`, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    try { await navigator.clipboard.writeText(url); alert('✅ 動畫連結已複製！\n可貼到 LINE 或訊息分享，對方點開即可播放。'); }
+    catch (e) { prompt('複製以下連結分享：', url); }
+}
+function mfaFromUrl() {
+    const q = new URLSearchParams(location.search);
+    const kind = q.get('play'); if (!kind) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== null && val !== '') el.value = val; };
+    set('solarYear', q.get('y')); set('solarMonth', q.get('m'));
+    document.getElementById('solarMonth').dispatchEvent(new Event('change'));
+    set('solarDay', q.get('d')); set('birthHour', q.get('h')); set('gender', q.get('g'));
+    set('flowYear', q.get('fy')); set('personName', q.get('n'));
+    runChart();
+    const n = q.get('n') || '', fy = q.get('fy') || '';
+    const gate = document.createElement('div');
+    gate.className = 'mfa-gate';
+    gate.innerHTML = `<div class="mfa-gate-box">
+        <div class="mfa-gate-sub">紫微斗數</div>
+        <div class="mfa-gate-title">${kind === 'expert' ? '飛星分析' : '流月運勢'}</div>
+        <div class="mfa-gate-info">${n ? n.replace(/[<>&"]/g, '') + '・' : ''}${fy.replace(/\D/g, '')} 年</div>
+        <button class="mfa-gate-btn">▶ 點此播放（有旁白）</button>
+        <div class="mfa-gate-skip">或關閉直接查看命盤</div>
+    </div>`;
+    document.body.appendChild(gate);
+    gate.querySelector('.mfa-gate-btn').onclick = () => { gate.remove(); mfaPlay(kind === 'expert' ? 'expert' : 'month'); };
+    gate.querySelector('.mfa-gate-skip').onclick = () => gate.remove();
+}
 
 function mfOpen(n) {
     const el = document.getElementById('mf-m' + n);
@@ -7683,6 +7735,7 @@ function toggleExpertReport() {
 // ================================================================
 initDateSelects();
 runChart();
+mfaFromUrl();
 
 // ================================================================
 //  PWA Service Worker 註冊（需要 HTTPS 才能生效）
