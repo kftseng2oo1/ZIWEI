@@ -308,7 +308,7 @@
         <div class="ctrl-group">
             <label>出生時辰</label>
             <select id="birthHour">
-                <option value="0">子時 (23-01)</option>
+                <option value="0">早子時 (00-01)</option>
                 <option value="1">丑時 (01-03)</option>
                 <option value="2">寅時 (03-05)</option>
                 <option value="3">卯時 (05-07)</option>
@@ -320,6 +320,7 @@
                 <option value="9">酉時 (17-19)</option>
                 <option value="10">戌時 (19-21)</option>
                 <option value="11">亥時 (21-23)</option>
+                <option value="12">晚子時 (23-24，以次日排盤)</option>
             </select>
         </div>
         <div class="ctrl-group">
@@ -3306,8 +3307,9 @@ function calculateChart(lunarYear, lunarMonth, lunarDay, hourIdx, gender, isLeap
     const yearGan = yearGZ.gan;
     const yearZhi = yearGZ.zhi;
 
-    // If leap month and month > 15th day, treat as next month for some schools
+    // 閏月：初一至十五作本月論，十六以後作下個月論（閏十二月下半月作正月）
     let effectiveMonth = lunarMonth;
+    if (isLeap && lunarDay > 15) effectiveMonth = lunarMonth % 12 + 1;
 
     // 1. 命宮地支
     const mingDzIdx = getMingGongDz(effectiveMonth, hourIdx);
@@ -3390,7 +3392,7 @@ function calculateChart(lunarYear, lunarMonth, lunarDay, hourIdx, gender, isLeap
         yearGan, yearZhi, mingDzIdx, shenDzIdx,
         mingGan, juNum, palaces,
         ziweiDzIdx, lunarYear: lunarYear,
-        lunarMonth: lunarMonth, hourIdx: hourIdx,
+        lunarMonth: effectiveMonth, hourIdx: hourIdx, // 排盤實際採用的月份（已處理閏月）
         daxianDir: daxianDir > 0 ? '順行' : '逆行',
         daxianList,
         mainStarsMap: mainStars,
@@ -3579,13 +3581,22 @@ function runChart() {
     const solarY = parseInt(document.getElementById('solarYear').value);
     const solarM = parseInt(document.getElementById('solarMonth').value);
     const solarD = parseInt(document.getElementById('solarDay').value);
-    const hr = parseInt(document.getElementById('birthHour').value);
+    let hr = parseInt(document.getElementById('birthHour').value);
     const gd = document.getElementById('gender').value;
     const fy = parseInt(document.getElementById('flowYear').value);
 
+    // 晚子時（23:00–24:00）：日期以次日計、時辰為子時
+    let calcY = solarY, calcM = solarM, calcD = solarD;
+    const lateZi = (hr === 12);
+    if (lateZi) {
+        const nd = new Date(solarY, solarM - 1, solarD + 1);
+        calcY = nd.getFullYear(); calcM = nd.getMonth() + 1; calcD = nd.getDate();
+        hr = 0;
+    }
+
     // 國曆→農曆轉換
-    const lunar = solarToLunar(solarY, solarM, solarD);
-    lastLunar = { ...lunar, solarY, solarM, solarD };
+    const lunar = solarToLunar(calcY, calcM, calcD);
+    lastLunar = { ...lunar, solarY, solarM, solarD, lateZi };
 
     chartData = calculateChart(lunar.year, lunar.month, lunar.day, hr, gd, lunar.isLeap ? 1 : 0);
 
@@ -3615,6 +3626,7 @@ function updateBirthInfo() {
         '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
     const hourNames = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
     const hr = parseInt(document.getElementById('birthHour').value);
+    const hourLabel = hr === 12 ? '晚子' : (hr === 0 ? '早子' : hourNames[hr]);
     const fy = parseInt(document.getElementById('flowYear').value);
     const juName = JU_NAMES_CORRECT[d.juNum] || `${d.juNum}局`;
     const nayinKey = d.mingGan + DI_ZHI[d.mingDzIdx];
@@ -3624,10 +3636,12 @@ function updateBirthInfo() {
         : '童限';
     const L = lastLunar;
     const leapTag = L && L.isLeap ? '（閏）' : '';
+    const leapNote = L && L.isLeap ? (L.day > 15 ? '・閏月下半月按下月排' : '・閏月上半月按本月排') : '';
+    const lateZiNote = L && L.lateZi ? '・晚子時按次日排' : '';
     const lunarStr = L ? `${L.year}年${leapTag}${monthNames[L.month]}月${dayNames[L.day] || L.day + '日'}` : '';
 
     document.getElementById('birthInfo').innerHTML =
-        `國曆 ${L ? L.solarY : ''}/${L ? L.solarM : ''}/${L ? L.solarD : ''} → 農曆 <b>${lunarStr}</b>　${hourNames[hr]}時　｜　` +
+        `國曆 ${L ? L.solarY : ''}/${L ? L.solarM : ''}/${L ? L.solarD : ''} → 農曆 <b>${lunarStr}</b>　${hourLabel}時<small style="opacity:.7;">${leapNote}${lateZiNote}</small>　｜　` +
         `<b>${d.yearGan}${d.yearZhi}年</b>　${juName}　${d.daxianDir}　｜　` +
         `流年${flowYearGan}（${fy}）虛歲${currentAge}　｜　` +
         `<b style="color:var(--gold-light)">${dxInfo}</b>`;
