@@ -5165,23 +5165,59 @@ function buildCross(palaces) {
 })();
 
 // 星曜質變/形變屬性庫
-const ZEP_STAR_NATURE = {
-    '廉貞':{ t:'質變', n:'廉貞化忌：由才化凶，法律口舌、血光之象' },
-    '天機':{ t:'質變', n:'天機化忌：思慮轉為焦慮，謀略失準，神經易耗' },
-    '太陽':{ t:'質變', n:'太陽化忌：光輝轉陰，名譽受損、父男緣薄' },
-    '太陰':{ t:'質變', n:'太陰化忌：陰柔轉晦，情緒起伏、母女緣薄' },
-    '貪狼':{ t:'質變', n:'貪狼化祿：欲望開花，桃花財祿俱旺' },
-    '巨門':{ t:'質變', n:'巨門化忌：口舌是非加重，隱憂浮現' },
-    '武曲':{ t:'質變', n:'武曲化忌：財星受剋，錢財受阻或破耗，孤剋感重' },
-    '天同':{ t:'形變', n:'天同化祿：悠遊享福，情緒輕鬆愉快' },
-    '天梁':{ t:'形變', n:'天梁化科：蔭護加強，考試文書有利' },
-    '紫微':{ t:'形變', n:'紫微化科：領導氣質提升，貴氣加持' },
-    '破軍':{ t:'形變', n:'破軍化祿：開創力強，勇於突破' },
-    '文昌':{ t:'形變', n:'文昌化科：文書才藝發揮，科甲有利' },
-    '文曲':{ t:'形變', n:'文曲化忌：口才反成是非，文書藏隱憂' },
-    '左輔':{ t:'形變', n:'左輔化科：得貴人輔助，暗中有情' },
-    '右弼':{ t:'形變', n:'右弼化科：得秘助，貴人在暗處' },
+// 星性分類（質變／形變）屬於星曜本身；描述則依「化祿／化權／化科／化忌」分別查表
+const ZEP_STAR_TYPE = {
+    '廉貞':'質變','天機':'質變','太陽':'質變','太陰':'質變','貪狼':'質變','巨門':'質變','武曲':'質變',
+    '天同':'形變','天梁':'形變','紫微':'形變','破軍':'形變','文昌':'形變','文曲':'形變','左輔':'形變','右弼':'形變',
 };
+const ZEP_HUA_NATURE = {
+    '廉貞':{ '祿':'由凶轉才，交際手腕佳，事業財源開展',
+             '忌':'由才化凶，法律口舌、血光之象' },
+    '破軍':{ '祿':'開創力強，勇於突破',
+             '權':'衝勁加倍，主導變革，宜防躁進' },
+    '武曲':{ '祿':'正財星得祿，實幹進財，理財有成',
+             '權':'財務掌控力強，執行果斷',
+             '科':'理財有方，財務信用佳',
+             '忌':'財星受剋，錢財受阻或破耗，孤剋感重' },
+    '太陽':{ '祿':'光明外放，名聲帶財，利於公眾與男性貴人',
+             '權':'聲望權威提升，主導力強，宜防過度付出',
+             '忌':'光輝轉陰，名譽受損、父男緣薄' },
+    '天機':{ '祿':'思路靈活，善謀生財，變動中得利',
+             '權':'謀略主導，策劃力強，宜防多慮',
+             '科':'聰慧顯名，規劃得宜，貴人指點',
+             '忌':'思慮轉為焦慮，謀略失準，神經易耗' },
+    '天梁':{ '祿':'蔭護帶財，長輩扶持，宜取之有道',
+             '權':'庇蔭有力，擔當重任，好為人師',
+             '科':'蔭護加強，考試文書有利' },
+    '紫微':{ '權':'帝星掌權，領導統御力強，宜防專斷',
+             '科':'領導氣質提升，貴氣加持' },
+    '太陰':{ '祿':'陰財積聚，田產家宅有利，女性貴人助',
+             '權':'內斂掌控，理家理財有方',
+             '科':'溫和清譽，文采柔美，貴人暗助',
+             '忌':'陰柔轉晦，情緒起伏、母女緣薄' },
+    '天同':{ '祿':'悠遊享福，情緒輕鬆愉快',
+             '權':'化懶為勤，福中有為，主動爭取',
+             '忌':'福氣受阻，情緒低落，安逸轉為空虛' },
+    '文昌':{ '科':'文書才藝發揮，科甲有利',
+             '忌':'文書出錯、契約受阻，考運不順' },
+    '巨門':{ '祿':'口才生財，以言得利，是非轉為助力',
+             '權':'言語有份量，說服力強，宜防強辯',
+             '忌':'口舌是非加重，隱憂浮現' },
+    '貪狼':{ '祿':'欲望開花，桃花財祿俱旺',
+             '權':'企圖心強，交際手腕主導',
+             '忌':'欲望受阻，貪多失衡，桃花是非' },
+    '文曲':{ '科':'口才文藝得名，表達受肯定',
+             '忌':'口才反成是非，文書藏隱憂' },
+    '左輔':{ '科':'得貴人輔助，暗中有情' },
+    '右弼':{ '科':'得秘助，貴人在暗處' },
+};
+const ZEP_HUA_GENERIC = { '祿':'能量增益，此領域得利', '權':'力量增強，主導掌控', '科':'名聲順遂，貴人相助', '忌':'執著受阻，此領域需留意' };
+// 依「星曜＋四化」取描述，避免只看星名而誤用其他化的解釋
+function zepNature(star, hua) {
+    const t = ZEP_STAR_TYPE[star] || '';
+    const d = (ZEP_HUA_NATURE[star] || {})[hua] || ZEP_HUA_GENERIC[hua];
+    return { t, n: d ? `${star}化${hua}：${d}` : '' };
+}
 
 const ZEP_INNER = ['命宮','財帛宮','官祿宮','疾厄宮','田宅宮','福德宮'];
 const ZEP_SEMANTICS = {
@@ -5311,7 +5347,7 @@ function generateExpertReport(palaces, birthGan, daLimitGan, flowYearGan2) {
         const r = detectSelfTrans(p);
         if(r.length){ sc++;
             r.forEach(x => {
-                const nat = ZEP_STAR_NATURE[x.star] || {t:'',n:''};
+                const nat = zepNature(x.star, x.type);
                 sh += `<div class="zep-selfhua">⚡ <b>${p.name}</b>（${p.gan}干）：<b>${x.star}</b> 自化<b class="${zepHuaClass(x.type)}">${x.type}</b>
                   → ${nat.n||'宮內截斷，能量即時消化。'}
                   <br><small style="opacity:.65;">※ 自化：能量在本宮截斷，時間感強，此宮領域常有瞬間得失。</small>
@@ -5333,7 +5369,7 @@ function generateExpertReport(palaces, birthGan, daLimitGan, flowYearGan2) {
           <div style="font-weight:bold;color:#f0d060;margin-bottom:6px;">📍 ${p.name}（${p.gan}干）<small style="color:#9a8560;font-weight:normal;"> · ${ZEP_SEMANTICS[p.name]||''}</small></div>`;
         ['祿','權','科','忌'].forEach(ht => {
             const d = fly[ht]; if(!d||d.targetName==='(盤外)') return;
-            const nat = ZEP_STAR_NATURE[d.star]||{t:'',n:''};
+            const nat = zepNature(d.star, ht);
             const rel = zepRelTag(name, d.targetName);
             const cols = zepCollision(d.targetPalace, d.star, ht, birthGan);
             ph += `<div class="zep-fly-item">
@@ -5602,7 +5638,7 @@ function generateExpertReport(palaces, birthGan, daLimitGan, flowYearGan2) {
             const d = dxFly[ht];
             if (!d || d.targetName === '(盤外)') return;
             const sem  = SEMANTIC[ht]['用入體'];
-            const nat  = ZEP_STAR_NATURE[d.star] || {t:'',n:''};
+            const nat  = zepNature(d.star, ht);
             const cols = zepCollision(d.targetPalace, d.star, ht, birthGan);
             dxh += `<div class="zep-fly-item">
               <div class="zep-flow">
