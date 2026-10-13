@@ -1,43 +1,19 @@
 {
   "name": "紫微斗數+AI大師",
-  "short_name": "紫微斗數+AI大師",
-  "description": "",
+  "short_name": "紫微斗數",
+  "description": "紫微斗數排盤、飛星四化分析與 AI 解盤",
   "start_url": "/ZIWEI/",
   "scope": "/ZIWEI/",
   "display": "standalone",
-  "orientation": "any",
-  "theme_color": "#1a73e8",
-  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "theme_color": "#1a1008",
+  "background_color": "#1a1008",
   "lang": "zh-TW",
   "categories": [
+    "lifestyle",
     "utilities"
   ],
-  "shortcuts": [
-    {
-      "name": "開啟 紫微斗數+AI大師",
-      "short_name": "紫微斗數+AI大師",
-      "url": "/ZIWEI/",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    }
-  ],
   "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-maskable.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",
@@ -46,6 +22,12 @@
     },
     {
       "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
