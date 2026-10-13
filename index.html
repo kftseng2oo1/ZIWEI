@@ -277,6 +277,11 @@
         #monthlyFortune { margin-top: 22px; }
         .mf-head { margin-bottom: 12px; }
         .mf-title { font-family:"Noto Serif TC",serif; color:var(--gold-light); font-weight:700; font-size:1em; letter-spacing:2px; }
+        .mf-title-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+        .mf-btns { margin-left:auto; display:flex; gap:6px; }
+        .mf-btns button { font-size:12px; padding:4px 10px; border-radius:4px; cursor:pointer; font-family:inherit;
+                          background:rgba(39,174,96,0.2); border:1px solid rgba(39,174,96,0.4); color:#55efc4; }
+        .mf-btns button + button { background:rgba(52,152,219,0.2); border-color:rgba(52,152,219,0.4); color:#74b9ff; }
         .mf-sub { font-size:11px; color:#b9a988; margin-top:4px; line-height:1.6; }
         .mf-sub b { color:var(--gold-light); }
         .mf-strip { display:grid; grid-template-columns:repeat(12,1fr); gap:5px; margin-bottom:10px; }
@@ -5365,6 +5370,100 @@ function mfHuaColor(k) {
     return { '祿': 'var(--lu)', '權': 'var(--quan)', '科': 'var(--ke)', '忌': '#7a1f1f' }[k];
 }
 
+/** 本月宜／忌 */
+function mfAdvice(m) {
+    const dom = MF_DOMAIN[m.mingP ? m.mingP.name : ''] || { theme: '', up: '', down: '' };
+    const pos0 = m.posInfo[0];
+    const yi = [], ji = [];
+    if (m.score > -1.2 && dom.up) yi.push(dom.up);
+    if (m.score < 1.2 && dom.down) ji.push(dom.down);
+    const firstPos = m.hits.find(h => h.k === '祿' || h.k === '權' || h.k === '科');
+    if (firstPos && !yi.includes(MF_HUA_ACT[firstPos.k][firstPos.pos.role])) yi.push(MF_HUA_ACT[firstPos.k][firstPos.pos.role]);
+    const firstJi = m.hits.find(h => h.k === '忌');
+    if (firstJi) ji.push(MF_HUA_ACT['忌'][firstJi.pos.role]);
+    if (pos0.lucky.length && !yi.length) yi.push(`${pos0.lucky.join('、')}守命，有貴人可依，遇事多請託協助。`);
+    if (pos0.sha.length) ji.push(`${pos0.sha.join('、')}入流月命宮，性急易衝動，防口角、受傷與破財。`);
+    if (!yi.length) yi.push('按部就班、維持既有節奏，累積實力。');
+    if (!ji.length) ji.push('無明顯凶象，留意細節即可。');
+    return { yi, ji, dom };
+}
+
+/** 流月逐月運勢：純文字（供存檔／PDF／分享） */
+function getMonthlyFortuneText() {
+    if (!chartData) return '';
+    const fy = parseInt(document.getElementById('flowYear')?.value);
+    if (!fy) return '';
+    const dj = getDouJunDzIdx(fy);
+    const months = Array.from({ length: 12 }, (_, i) => analyzeFlowMonth(i + 1, dj, fy));
+    const flowZhi = DI_ZHI[((fy - 4) % 12 + 12) % 12];
+    const order = { '流月': 0, '流年': 1, '大限': 2, '生年': 3 };
+    const best = [...months].sort((a, b) => b.score - a.score).slice(0, 3).sort((a, b) => a.n - b.n);
+    const worst = [...months].sort((a, b) => a.score - b.score).slice(0, 3).sort((a, b) => a.n - b.n);
+
+    let txt = `【📆 ${fy}年（${flowYearGan}${flowZhi}）流月逐月運勢】\n${'─'.repeat(30)}\n`;
+    txt += `斗君在${DI_ZHI[dj]}（正月流月命宮）・月份為農曆\n`;
+    txt += `總覽：${months.map(m => MF_MON[m.n - 1] + '月' + m.verdict.text).join('｜')}\n`;
+    txt += `可積極月份：${best.map(m => MF_MON[m.n - 1] + '月').join('、')}　宜保守月份：${worst.map(m => MF_MON[m.n - 1] + '月').join('、')}\n`;
+
+    months.forEach(m => {
+        const { yi, ji, dom } = mfAdvice(m);
+        txt += `\n▶ 農曆${MF_MON[m.n - 1]}月【${m.verdict.text}】${m.mGan}干・流月命宮在${DI_ZHI[m.dz]}（本命${m.mingP ? m.mingP.name : ''}）\n`;
+        if (dom.theme) txt += `本月重心：${dom.theme}\n`;
+        txt += `三方四正：\n`;
+        m.posInfo.forEach(pi => {
+            const mains = pi.mains.length ? pi.mains.map(x => x.s + (x.w ? '(' + x.w + ')' : '')).join('、') : '無主星';
+            const extra = [...pi.lucky, ...pi.sha.map(s => s + '(煞)')].join('、');
+            txt += `　${pi.label}（${DI_ZHI[pi.dz]}・本命${pi.palace ? pi.palace.name : ''}）：${mains}${extra ? '；' + extra : ''}\n`;
+        });
+        if (m.hits.length) {
+            txt += `四化引動：\n`;
+            [...m.hits].sort((a, b) => order[a.layer] - order[b.layer]).forEach(h => {
+                const nat = zepNature(h.star, h.k).n;
+                txt += `　${h.layer}${h.k}：${h.star}入${h.pos.label}（本命${h.palaceName}）${nat ? '－' + nat : ''}\n　　➤ ${MF_HUA_ACT[h.k][h.pos.role]}\n`;
+            });
+        } else {
+            txt += `四化引動：三方四正未受四化引動，平穩行事。\n`;
+        }
+        m.notes.forEach(n => txt += `◇ ${n}\n`);
+        txt += `✅ 宜：${yi.join(' ')}\n⛔ 忌：${ji.join(' ')}\n`;
+    });
+    return txt;
+}
+
+function exportMonthlyText() {
+    const body = getMonthlyFortuneText();
+    if (!body) { alert('請先排盤並輸入流年。'); return; }
+    const personName = document.getElementById('personName')?.value?.trim() || '命主';
+    const now = new Date().toLocaleDateString('zh-TW');
+    const fy = document.getElementById('flowYear')?.value || '';
+    const txt = `命主：${personName}　生年：${chartData.yearGan}${chartData.yearZhi}年　流年：${fy}年\n產出日期：${now}\n\n` + body +
+        `\n＊ 吉凶為規則化參考，本報告依飛星四化理則自動生成 ＊`;
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `流月運勢_${personName}_${fy}.txt`;
+    a.click(); URL.revokeObjectURL(url);
+}
+
+async function shareMonthlyReport() {
+    const body = getMonthlyFortuneText();
+    if (!body) { alert('請先排盤並輸入流年。'); return; }
+    const personName = document.getElementById('personName')?.value?.trim() || '命主';
+    const txt = `命主：${personName}\n` + body;
+    if (navigator.share) {
+        try { await navigator.share({ title: `${personName} 的流月逐月運勢`, text: txt }); return; } catch (e) {}
+    }
+    try {
+        await navigator.clipboard.writeText(txt);
+        alert('✅ 流月運勢已複製到剪貼簿！');
+    } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = txt; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        alert('✅ 流月運勢已複製到剪貼簿！');
+    }
+}
+
 function renderMonthlyFortune() {
     const box = document.getElementById('monthlyFortune');
     if (!box || !chartData) return;
@@ -5386,7 +5485,13 @@ function renderMonthlyFortune() {
     const worst = [...months].sort((a, b) => a.score - b.score).slice(0, 3).sort((a, b) => a.n - b.n);
 
     let html = `<div class="mf-head">
-        <div class="mf-title">📆 ${fy}年（${flowYearGan}${flowZhi}）流月逐月運勢</div>
+        <div class="mf-title-row">
+            <div class="mf-title">📆 ${fy}年（${flowYearGan}${flowZhi}）流月逐月運勢</div>
+            <div class="mf-btns">
+                <button onclick="exportMonthlyText()">💾 存檔</button>
+                <button onclick="shareMonthlyReport()">🔗 分享</button>
+            </div>
+        </div>
         <div class="mf-sub">斗君在<b>${DI_ZHI[douJun]}</b>（正月流月命宮）・依流月命宮三方四正之主星廟陷、吉煞星與生年／大限／流年／流月四化評估・月份為農曆</div>
     </div>`;
 
@@ -5427,18 +5532,7 @@ function renderMonthlyFortune() {
             </div>`;
         }).join('') : '<div class="mf-none">三方四正未受四化引動，本月以星曜本質論，平穩行事。</div>';
 
-        // 宜／忌
-        const yi = [], ji = [];
-        if (m.score > -1.2 && dom.up) yi.push(dom.up);
-        if (m.score < 1.2 && dom.down) ji.push(dom.down);
-        const firstPos = m.hits.find(h => h.k === '祿' || h.k === '權' || h.k === '科');
-        if (firstPos && !yi.includes(MF_HUA_ACT[firstPos.k][firstPos.pos.role])) yi.push(MF_HUA_ACT[firstPos.k][firstPos.pos.role]);
-        const firstJi = m.hits.find(h => h.k === '忌');
-        if (firstJi) ji.push(MF_HUA_ACT['忌'][firstJi.pos.role]);
-        if (pos0.lucky.length && !yi.length) yi.push(`${pos0.lucky.join('、')}守命，有貴人可依，遇事多請託協助。`);
-        if (pos0.sha.length) ji.push(`${pos0.sha.join('、')}入流月命宮，性急易衝動，防口角、受傷與破財。`);
-        if (!yi.length) yi.push('按部就班、維持既有節奏，累積實力。');
-        if (!ji.length) ji.push('無明顯凶象，留意細節即可。');
+        const { yi, ji } = mfAdvice(m);
 
         return `<details class="mf-month mf-${m.verdict.key}" id="mf-m${m.n}"${m.n === curMonth ? ' open' : ''}>
             <summary>
@@ -6338,6 +6432,8 @@ function getAIReportText() {
             txt += `【大師論斷】\n${m.content}\n\n${'─'.repeat(40)}\n\n`;
         }
     });
+    const mfTxtA = getMonthlyFortuneText();
+    if (mfTxtA) txt += `\n${mfTxtA}\n`;
     txt += `\n＊ 本報告由 AI 紫微斗數大師依曾氏飛星四化理則自動生成 ＊`;
     return txt;
 }
@@ -6383,6 +6479,9 @@ function exportAIPDF() {
             lines.push('');
         }
     });
+
+    const mfTxtAP = getMonthlyFortuneText();
+    if (mfTxtAP) mfTxtAP.split('\n').forEach(l => mfWrap(l, 50).forEach(s => lines.push(s)));
 
     // Canvas 多頁繪製
     const W = 794, H = 1123; // A4 px at 96dpi
@@ -6487,6 +6586,21 @@ async function shareAIReport() {
     }
 }
 
+/** 長行依字數切段（Canvas 不會自動換行） */
+function mfWrap(line, n) {
+    if (!line) return [''];
+    const out = [];
+    const indent = (line.match(/^[\s　]*/) || [''])[0];
+    let rest = line;
+    while ([...rest].length > n) {
+        const chars = [...rest];
+        out.push(chars.slice(0, n).join(''));
+        rest = indent + '　' + chars.slice(n).join('');
+    }
+    out.push(rest);
+    return out;
+}
+
 // ── 飛星分析報告 匯出 ──
 function getExpertReportText() {
     const personName = document.getElementById('personName')?.value?.trim() || '命主';
@@ -6512,6 +6626,8 @@ function getExpertReportText() {
         else txt += block.innerText.replace(title?.innerText||'','').trim() + '\n';
     });
     if (!area.querySelector('.zep-block')) txt += area.innerText.trim();
+    const mfTxt = getMonthlyFortuneText();
+    if (mfTxt) txt += `\n\n${mfTxt}`;
     txt += `\n\n＊ 本報告依曾氏飛星四化理則自動生成 ＊`;
     return txt;
 }
@@ -6558,6 +6674,12 @@ function exportExpertPDF() {
     });
     if (!area.querySelector('.zep-block')) {
         area.innerText.trim().split('\n').forEach(l => l.trim() && lines.push(l.trim()));
+    }
+    // 流月逐月運勢（長行自動換行）
+    const mfTxtP = getMonthlyFortuneText();
+    if (mfTxtP) {
+        lines.push('');
+        mfTxtP.split('\n').forEach(l => mfWrap(l, 58).forEach(s => lines.push(s)));
     }
 
     const LINE_H = 22, FONT = 13, MARGIN = 48, PW = W, PH = 1123;
