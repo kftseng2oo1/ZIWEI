@@ -334,18 +334,18 @@
         .mf-chip-m { font-size:11px; font-weight:700; }
         .mf-chip-v { font-size:12px; font-weight:700; }
         .mf-chip-p { font-size:10px; opacity:.7; }
-        .mf-chip.mf-dj { background:#f6e3a1; border-color:var(--lu); }
-        .mf-chip.mf-j  { background:#fbf0cf; }
+        .mf-chip.mf-dj { background:#cfe9d7; border-color:#2e8b57; }
+        .mf-chip.mf-j  { background:#e1f2e6; border-color:rgba(46,139,87,0.45); }
         .mf-chip.mf-x  { background:#e9dcd4; }
         .mf-chip.mf-dx { background:#d9c7c0; border-color:#7a1f1f; }
-        .mf-chip.mf-dj .mf-chip-v, .mf-chip.mf-j .mf-chip-v { color:#9a6b00; }
+        .mf-chip.mf-dj .mf-chip-v, .mf-chip.mf-j .mf-chip-v { color:#1e7a46; }
         .mf-chip.mf-x .mf-chip-v, .mf-chip.mf-dx .mf-chip-v { color:#7a1f1f; }
         .mf-chip.mf-now { outline:2px solid var(--gold-light); outline-offset:1px; }
         .mf-keys { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:12px; color:#e8dcc8; margin-bottom:12px; }
         .mf-keys b { color:var(--gold-light); }
         .mf-month { background:rgba(247,243,233,0.96); border-radius:7px; border-left:5px solid var(--gold);
                     margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.12); overflow:hidden; }
-        .mf-month.mf-dj { border-left-color:var(--lu); }
+        .mf-month.mf-dj, .mf-month.mf-j { border-left-color:#2e8b57; }
         .mf-month.mf-x  { border-left-color:#a0522d; }
         .mf-month.mf-dx { border-left-color:#7a1f1f; }
         .mf-month summary { list-style:none; cursor:pointer; padding:11px 14px; display:flex; flex-wrap:wrap;
@@ -354,7 +354,7 @@
         .mf-month summary::after { content:'▼'; font-size:11px; color:#aaa; margin-left:auto; transition:transform .25s; }
         .mf-month[open] summary::after { transform:rotate(180deg); color:var(--gold); }
         .mf-badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; background:#efe6cf; }
-        .mf-dj .mf-badge, .mf-j .mf-badge { background:#f6e3a1; color:#7a5200; }
+        .mf-dj .mf-badge, .mf-j .mf-badge { background:#d4eddc; color:#1e6b3e; }
         .mf-x .mf-badge, .mf-dx .mf-badge { background:#ecd5cf; color:#7a1f1f; }
         .mf-meta { font-size:11px; color:#777; }
         .mf-nowtag { font-size:10px; background:var(--vermillion); color:#fff; padding:1px 6px; border-radius:8px; }
@@ -3604,7 +3604,7 @@ function fbScoreLayers(palaces, layers, fs) {
 }
 // 四級評等（與流月總評一致：吉／平／小心／守成）
 function fbLevel(v) {
-    if (v >= 1.5)  return { key: 'j',  text: '吉',   color: '#9a6b00' };
+    if (v >= 1.5)  return { key: 'j',  text: '吉',   color: '#1e7a46' };
     if (v > -1.5)  return { key: 'p',  text: '平',   color: '#9a917f' };
     if (v > -4)    return { key: 'x',  text: '小心', color: '#d9773a' };
     return               { key: 'dx', text: '守成', color: '#c0392b' };
@@ -5718,7 +5718,7 @@ async function shareMonthlyReport() {
 
 // 12 個月 × 財事感健 熱度條
 function fbHeatHtml(R) {
-    const C = { j: '#d4a017', p: 'rgba(255,255,255,.13)', x: '#e08a4a', dx: '#c0392b' };
+    const C = { j: '#3aa66a', p: 'rgba(255,255,255,.13)', x: '#e08a4a', dx: '#c0392b' };
     const MS = ['正','二','三','四','五','六','七','八','九','十','冬','臘'];
     let html = `<div class="fb-heat"><div class="fb-hrow fb-hhead"><span></span>` +
         R.months.map(M => `<span>${MS[M.n - 1]}${M.isPeak ? '<i>🔔</i>' : ''}</span>`).join('') + `</div>`;
@@ -5861,7 +5861,7 @@ const MFA_W = 1080, MFA_H = 1920;
 const MFA_COL = {
     gold: '#d4a843', gold2: '#f0d090', cream: '#f3e9d2', dim: '#968a6e', ink: '#120a05', panel: '#221810',
     hua: { '祿': '#e6b422', '權': '#e2573f', '科': '#3fa7e0', '忌': '#b46ed6' },
-    ver: { '大吉': '#e6b422', '吉': '#c9a227', '平': '#aaa08c', '小心': '#d9773a', '守成': '#c0392b' },
+    ver: { '大吉': '#4cc38a', '吉': '#3fae73', '平': '#aaa08c', '小心': '#d9773a', '守成': '#c0392b' },
 };
 const MFA_SERIF = '"Noto Serif TC","PingFang TC","Songti TC",serif';
 const MFA_SANS = '"Noto Sans TC","PingFang TC","Heiti TC",sans-serif';
