@@ -5932,7 +5932,8 @@ function mfaBuild() {
     const byScore = [...months].sort((a, b) => b.score - a.score);
     const best = byScore.slice(0, 3).map(m => m.n - 1).sort((a, b) => a - b);
     const worst = byScore.slice(-3).map(m => m.n - 1).sort((a, b) => a - b);
-    const die = months.filter(m => m.notes.some(n => n.startsWith('疊忌'))).map(m => m.n - 1);
+    // 疊忌月：排除已列為黃金月的月份，避免同一個月既是黃金月又是疊忌月
+    const die = months.filter(m => m.notes.some(n => n.startsWith('疊忌'))).map(m => m.n - 1).filter(i => !best.includes(i));
     const join = arr => arr.map(mn).join('、');
     let FB = null;
     try { FB = fbAnalyzeYear(fy); } catch (e) {}
