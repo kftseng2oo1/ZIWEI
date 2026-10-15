@@ -181,6 +181,30 @@
         .gan-tag { position:absolute; top:6px; left:6px; font-family:"Noto Serif TC",serif; font-weight:700; color:var(--ink); font-size:12px; opacity:0.7; }
         .p-name { position:absolute; bottom:5px; left:50%; transform:translateX(-50%); font-family:"Noto Serif TC",serif; font-weight:700; font-size:12px; color:var(--ink); background:var(--paper-dark); padding:2px 6px; border-radius:3px; white-space:nowrap; }
         .dz-tag { position:absolute; bottom:6px; left:6px; font-size:10px; color:#aaa; }
+        .layer-tag { position:absolute; top:30px; left:5px; display:flex; flex-direction:column; gap:3px; font-size:10px; line-height:1; pointer-events:none; }
+        .layer-tag span { padding:2px 2px; border-radius:3px; white-space:nowrap; }
+        .layer-tag .lt-dx { color:#8a6d1f; background:rgba(184,134,11,0.12); }
+        .layer-tag .lt-yr { color:#1f5f8b; background:rgba(31,95,139,0.10); }
+        .palace.is-flow-ming .lt-yr { color:#fff; background:#1f5f8b; font-weight:700; }
+        .palace.is-flow-ming { box-shadow:inset 0 0 0 2px rgba(31,95,139,0.55); }
+        .ov-table { width:100%; border-collapse:collapse; font-size:11px; margin:6px 0 10px; }
+        .ov-table th, .ov-table td { border-bottom:1px solid #ece8de; padding:4px 3px; text-align:left; vertical-align:top; }
+        .ov-table th { color:#999; font-weight:400; }
+        .ov-table tr.ov-ming td { background:rgba(31,95,139,0.07); font-weight:700; }
+        .ov-hua { white-space:nowrap; }
+        .fb-heat { margin:16px 0 10px; font-size:11px; }
+        .fb-hrow { display:grid; grid-template-columns:18px repeat(12, 1fr); gap:3px; margin-bottom:3px; align-items:center; }
+        .fb-hhead span { text-align:center; color:#999; font-size:10px; position:relative; }
+        .fb-hhead i { position:absolute; top:-12px; left:50%; transform:translateX(-50%); font-style:normal; font-size:9px; }
+        .fb-hlbl { color:#666; font-weight:700; }
+        .fb-hcell { height:16px; border-radius:3px; display:block; }
+        .fb-hleg { display:flex; gap:10px; justify-content:flex-end; color:#999; font-size:10px; margin-top:4px; }
+        .fb-hleg i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:3px; vertical-align:-1px; }
+        .fb-doms { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
+        .fb-dom { font-size:12px; padding:2px 8px; border-radius:10px; background:#faf6ea; border:1px solid #ece2c8; }
+        .fb-peak { font-size:12px; color:#1f5f8b; background:rgba(31,95,139,0.07); border-left:3px solid #1f5f8b; padding:5px 8px; margin:4px 0 8px; }
+        .mf-chip .mf-bell { display:block; font-size:10px; line-height:1; }
+        .mf-flow { font-size:10px; color:#1f5f8b; background:rgba(31,95,139,0.08); border-radius:3px; padding:0 3px; margin-left:3px; }
         .body-tag { position:absolute; top:6px; right:6px; font-size:9px; color:#999; }
 
         .fly-indicators { position:absolute; top:20px; right:6px; display:flex; flex-direction:column; gap:2px; align-items:flex-end; }
@@ -601,7 +625,7 @@ const LUNAR_INFO = [
 0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
 0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
 0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
-0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+0x06566,0x0d4a0,0x0ea50,0x16a95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
 0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
 0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
 0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
@@ -3517,6 +3541,124 @@ function palaceByDz(palaces, dzIdx) {
 }
 
 // ================================================================
+//  ★ 流年疊宮・流年星曜・領域引動評分（四級：吉／平／小心／守成）
+// ================================================================
+const PALACE_SHORT = ['命','兄','夫','子','財','疾','遷','友','官','田','福','父'];
+function layerPalaceIdx(layerMingDz, dzIdx) { return ((layerMingDz - dzIdx) % 12 + 12) % 12; }
+function layerPalaceName(layerMingDz, dzIdx) { return PALACE_NAMES[layerPalaceIdx(layerMingDz, dzIdx)]; }
+function getFlowYearZhiIdx(westernYear) { return ((westernYear - 4) % 12 + 12) % 12; }
+function buildOverlay(chart, daxian, westernYear) {
+    const fyZhi = getFlowYearZhiIdx(westernYear);
+    return DI_ZHI.map((dz, dzIdx) => {
+        const p = palaceByDz(chart.palaces, dzIdx);
+        return { dz, dzIdx, palace: p, ben: p ? p.name : '',
+                 dx: daxian ? layerPalaceName(daxian.dzIdx, dzIdx) : '',
+                 yr: layerPalaceName(fyZhi, dzIdx), yrIdx: layerPalaceIdx(fyZhi, dzIdx) };
+    });
+}
+// 流年星曜（依流年干支）
+const FLOW_CHANG = {甲:'巳',乙:'午',丙:'申',丁:'酉',戊:'申',己:'酉',庚:'亥',辛:'子',壬:'寅',癸:'卯'};
+const FLOW_QU    = {甲:'酉',乙:'申',丙:'午',丁:'巳',戊:'午',己:'巳',庚:'卯',辛:'寅',壬:'子',癸:'亥'};
+const FLOW_STAR_KEYS = ['流祿','流羊','流陀','流昌','流曲','流魁','流鉞','流馬'];
+function getFlowStars(gan, zhi) {
+    const lu = getLucun(gan)['祿存'];
+    const ky = getKuiYue(gan);
+    return { '流祿': lu, '流羊': (lu + 1) % 12, '流陀': (lu + 11) % 12,
+             '流昌': DZ_INDEX[FLOW_CHANG[gan]], '流曲': DZ_INDEX[FLOW_QU[gan]],
+             '流魁': ky['天魁'], '流鉞': ky['天鉞'], '流馬': getTianma(zhi)['天馬'] };
+}
+function flowStarsAt(fs, dz) { return FLOW_STAR_KEYS.filter(k => fs[k] === dz); }
+
+const FB_HUA_W = { 祿: 3, 權: 2, 科: 1, 忌: -3 };
+const FB_LAYER_F = { 生年: 0.5, 大限: 1, 流年: 1.5, 流月: 1.5 };
+// 各地支的四化引動分數與事件
+function fbScoreLayers(palaces, layers, fs) {
+    const S = Array.from({ length: 12 }, () => ({ score: 0, events: [], hua: [] }));
+    const add = (dz, v, ev) => { S[dz].score += v; if (ev) S[dz].events.push({ v, text: ev }); };
+    layers.forEach(([label, gan]) => {
+        const fly = computeFly(palaces, gan); if (!fly) return;
+        const f = FB_LAYER_F[label] || 1;
+        SH_KEYS.forEach(k => {
+            const tp = palaces.find(pp => pp.name === fly[k].targetPalace); if (!tp) return;
+            S[tp.dzIdx].hua.push({ layer: label, k, star: fly[k].star });
+            add(tp.dzIdx, FB_HUA_W[k] * f, null);
+            if (k === '忌') add((tp.dzIdx + 6) % 12, -1.5 * f, `${label}${fly[k].star}忌沖`);
+        });
+    });
+    for (let dz = 0; dz < 12; dz++) {
+        const ji = S[dz].hua.filter(x => x.k === '忌'), lu = S[dz].hua.filter(x => x.k === '祿');
+        if (ji.length >= 2) add(dz, -3 * (ji.length - 1), `疊忌（${ji.map(x => x.layer + x.star).join('＋')}）`);
+        if (lu.length >= 2) add(dz, 2 * (lu.length - 1), `疊祿（${lu.map(x => x.layer + x.star).join('＋')}）`);
+        if (lu.length && ji.length) add(dz, -1, `祿忌同宮（${lu[0].layer}祿遇${ji[0].layer}忌）`);
+        const oppJi = S[(dz + 6) % 12].hua.filter(x => x.k === '忌');
+        if (lu.length && oppJi.length) add(dz, -2, `祿逢沖破（${oppJi[0].layer}${oppJi[0].star}忌沖${lu[0].layer}祿）`);
+        if (fs) {
+            if (ji.length && fs['流祿'] === dz) add(dz, -2, '羊陀夾忌');
+            else if (ji.length && fs['流羊'] === dz) add(dz, -1.5, '流羊與忌同宮');
+            else if (ji.length && fs['流陀'] === dz) add(dz, -1, '流陀與忌同宮');
+            if (lu.length && fs['流祿'] === dz) add(dz, 1.5, '流祿存會祿');
+            if (fs['流魁'] === dz || fs['流鉞'] === dz) add(dz, 0.5, null);
+        }
+    }
+    return S;
+}
+// 四級評等（與流月總評一致：吉／平／小心／守成）
+function fbLevel(v) {
+    if (v >= 1.5)  return { key: 'j',  text: '吉',   color: '#9a6b00' };
+    if (v > -1.5)  return { key: 'p',  text: '平',   color: '#9a917f' };
+    if (v > -4)    return { key: 'x',  text: '小心', color: '#d9773a' };
+    return               { key: 'dx', text: '守成', color: '#c0392b' };
+}
+const FB_DOMAINS = [
+    { key: '命宮', label: '整體', icon: '🧭' }, { key: '財帛宮', label: '財運', icon: '💰' },
+    { key: '官祿宮', label: '事業', icon: '💼' }, { key: '夫妻宮', label: '感情', icon: '💖' },
+    { key: '疾厄宮', label: '健康', icon: '🩺' }, { key: '田宅宮', label: '家宅', icon: '🏠' },
+    { key: '遷移宮', label: '外出', icon: '✈️' },
+];
+const FB_MONTH_DOMAINS = ['財運','事業','感情','健康'];
+function fbDomainScores(S, layerMingDz) {
+    return FB_DOMAINS.map(d => {
+        const dz = ((layerMingDz - PALACE_NAMES.indexOf(d.key)) % 12 + 12) % 12;
+        return { ...d, dz, score: S[dz].score, level: fbLevel(S[dz].score), events: S[dz].events, hua: S[dz].hua };
+    });
+}
+function fbTopEvent(d) {
+    const e = d.events.filter(x => x.text).sort((a, b) => Math.abs(b.v) - Math.abs(a.v))[0];
+    return e ? e.text : '';
+}
+// 整年＋逐月領域分析
+function fbAnalyzeYear(fy) {
+    const yGan = getFlowYearGan(fy), yZhiIdx = getFlowYearZhiIdx(fy);
+    const fs = getFlowStars(yGan, DI_ZHI[yZhiIdx]);
+    const base = [['生年', chartData.yearGan]];
+    if (currentDaxian) base.push(['大限', currentDaxian.gan]);
+    base.push(['流年', yGan]);
+    const yearS = fbScoreLayers(chartData.palaces, base, fs);
+    const year = fbDomainScores(yearS, yZhiIdx);
+    const douJun = getDouJunDzIdx(fy);
+    const peak = yearS.reduce((a, c, i) => Math.abs(c.score) > Math.abs(a.s) ? { s: c.score, i } : a, { s: 0, i: -1 });
+    const months = [];
+    for (let n = 1; n <= 12; n++) {
+        const mGan = getPalaceGan(yGan, (n + 1) % 12);
+        const mMing = (douJun + n - 1) % 12;
+        const S = fbScoreLayers(chartData.palaces, [...base, ['流月', mGan]], fs);
+        months.push({ n, mGan, mMing, domains: fbDomainScores(S, mMing).filter(d => FB_MONTH_DOMAINS.includes(d.label)),
+                      isPeak: peak.i === mMing && Math.abs(peak.s) >= 3 });
+    }
+    return { yGan, yZhiIdx, fs, yearS, year, douJun, months, peak };
+}
+function fbAdviceKey(lv) { return lv.key === 'j' ? 'up' : lv.key === 'p' ? 'flat' : 'down'; }
+const FB_ADVICE = {
+    '整體': { up:'運勢順，適合推動重要計畫、主動爭取機會。', flat:'平穩之年，按部就班，累積實力。', down:'壓力集中在自身，重大決策放慢，先求穩再求進。' },
+    '財運': { up:'進財機會多，可主動開源；獲利要落袋為安。', flat:'收支平穩，維持既有理財配置即可。', down:'易有破耗，避免高槓桿與借貸擔保，先守住現金流。' },
+    '事業': { up:'工作有表現舞台，適合爭取升遷、主導專案。', flat:'職場平穩，把手上工作做好、做出口碑。', down:'職場壓力大，文件留底、少硬碰硬，重大轉換宜延後。' },
+    '感情': { up:'感情升溫，適合確認關係、安排相處時間。', flat:'感情平順，維持日常經營。', down:'易有誤會摩擦，多傾聽少計較，避免情緒性決定。' },
+    '健康': { up:'體況佳，適合養成運動習慣或調理舊疾。', flat:'作息正常即可，定期健檢。', down:'能量偏低，注意過勞與慢性問題，安排健檢並增加休息。' },
+    '家宅': { up:'利置產、搬遷、裝修，家運和順。', flat:'家中平穩，無須大動。', down:'不宜簽約置產或大興土木，留意家人與房屋修繕。' },
+    '外出': { up:'外出有機緣，利出差、拓展人脈與業務。', flat:'外出平常，照計畫進行。', down:'外出多變數，注意交通安全，對外合作多確認細節。' },
+};
+
+// ================================================================
 //  FLYING PALACE ENGINE (from previous version)
 // ================================================================
 function findStarInPalaces(palaces, starName) {
@@ -3625,6 +3767,7 @@ window.addEventListener('DOMContentLoaded', renderRecords);
 let selectedFly = '';
 let currentDaxian = null; // { palaceName, gan, startAge, endAge }
 let flowYearGan = '丙';
+let flowYearNum = new Date().getFullYear();
 let currentAge = 0;
 
 function getFlowYearGan(westernYear) {
@@ -3702,6 +3845,7 @@ function runChart() {
 
     // Derive flow year 天干
     flowYearGan = getFlowYearGan(fy);
+    flowYearNum = fy;
 
     // Compute current age (虛歲 = 流年 - 出生農曆年 + 1)
     currentAge = fy - lunar.year + 1;
@@ -3743,7 +3887,7 @@ function updateBirthInfo() {
     document.getElementById('birthInfo').innerHTML =
         `國曆 ${L ? L.solarY : ''}/${L ? L.solarM : ''}/${L ? L.solarD : ''} → 農曆 <b>${lunarStr}</b>　${hourLabel}時<small style="opacity:.7;">${leapNote}${lateZiNote}</small>　｜　` +
         `<b>${d.yearGan}${d.yearZhi}年</b>　${juName}　${d.daxianDir}　｜　` +
-        `流年${flowYearGan}（${fy}）虛歲${currentAge}　｜　` +
+        `流年${flowYearGan}${DI_ZHI[getFlowYearZhiIdx(fy)]}（${fy}）虛歲${currentAge}・流年命宮在${DI_ZHI[getFlowYearZhiIdx(fy)]}（本命${(palaceByDz(d.palaces, getFlowYearZhiIdx(fy)) || {}).name || '?'}）　｜　` +
         `<b style="color:var(--gold-light)">${dxInfo}</b>`;
 }
 
@@ -3784,6 +3928,8 @@ function renderGrid() {
         div.className = 'palace';
         if (palace.isMing) div.classList.add('is-ming');
         if (currentDaxian && palace.name === currentDaxian.palaceName) div.classList.add('is-daxian');
+        const fyZhiIdx = getFlowYearZhiIdx(flowYearNum);
+        if (palace.dzIdx === fyZhiIdx) div.classList.add('is-flow-ming');
         if (hl.source === palace.name) div.classList.add('hl-source');
         if (hl.luTargets.includes(palace.name)) div.classList.add('hl-lu');
         if (hl.jiTargets.includes(palace.name)) div.classList.add('hl-ji');
@@ -3852,7 +3998,10 @@ function renderGrid() {
             div.appendChild(stDiv);
         }
 
-        div.innerHTML += `<div class="dz-tag">${palace.dz}</div><div class="p-name">${palace.name}</div>`;
+        const layerTags = [];
+        if (currentDaxian) layerTags.push(`<span class="lt-dx">限${PALACE_SHORT[layerPalaceIdx(currentDaxian.dzIdx, palace.dzIdx)]}</span>`);
+        layerTags.push(`<span class="lt-yr">年${PALACE_SHORT[layerPalaceIdx(fyZhiIdx, palace.dzIdx)]}</span>`);
+        div.innerHTML += `<div class="layer-tag">${layerTags.join('')}</div><div class="dz-tag">${palace.dz}</div><div class="p-name">${palace.name}</div>`;
         chart.appendChild(div);
     });
 }
@@ -4539,6 +4688,50 @@ const InvestmentAnalyst = {
     }
 };
 
+// 流年疊宮表＋流年星曜＋七大領域評等
+function fbBuildYearHtml() {
+    const fy = flowYearNum;
+    const R = fbAnalyzeYear(fy);
+    const fyZhi = R.yZhiIdx;
+    const mingP = palaceByDz(chartData.palaces, fyZhi);
+    const bSh = SIHUA[chartData.yearGan], ySh = SIHUA[R.yGan], dSh = currentDaxian ? SIHUA[currentDaxian.gan] : null;
+    const huaTags = (p) => {
+        if (!p) return '';
+        const all = [...p.stars.m, ...p.stars.a], out = [];
+        for (const k of SH_KEYS) {
+            if (all.includes(bSh[k])) out.push(`<span class="sh-tag sh-${SH_CLS[k]}">生${k}</span>`);
+            if (dSh && all.includes(dSh[k])) out.push(`<span class="sh-tag sh-${SH_CLS[k]}">限${k}</span>`);
+            if (all.includes(ySh[k])) out.push(`<span class="sh-tag sh-${SH_CLS[k]}">流${k}</span>`);
+        }
+        return out.join('');
+    };
+    let html = `<u>★ 流年命宮與疊宮</u>：<br>`;
+    html += `流年${R.yGan}${DI_ZHI[fyZhi]}，流年命宮在<b>${DI_ZHI[fyZhi]}宮</b>（疊本命${mingP ? mingP.name : '?'}` +
+            (currentDaxian ? `、大限${layerPalaceName(currentDaxian.dzIdx, fyZhi)}` : '') + `），主星：` +
+            `${mingP && mingP.stars.m.length ? mingP.stars.m.join('、') : '空宮（借對宮）'}。斗君在<b>${DI_ZHI[R.douJun]}宮</b>。<br>`;
+    html += `流年星曜：${FLOW_STAR_KEYS.map(k => k + DI_ZHI[R.fs[k]]).join('　')}<br>`;
+    html += `<table class="ov-table"><tr><th>流年</th><th>地支</th><th>本命</th>${currentDaxian ? '<th>大限</th>' : ''}<th>主星・四化</th></tr>`;
+    buildOverlay(chartData, currentDaxian, fy).sort((a, b) => a.yrIdx - b.yrIdx).forEach(o => {
+        const stars = o.palace && o.palace.stars.m.length ? o.palace.stars.m.join('') : '—';
+        const fl = flowStarsAt(R.fs, o.dzIdx).map(s => `<span class="mf-flow">${s}</span>`).join('');
+        html += `<tr class="${o.yrIdx === 0 ? 'ov-ming' : ''}"><td>${o.yr}</td><td>${o.dz}</td><td>${o.ben}</td>` +
+                (currentDaxian ? `<td>${o.dx}</td>` : '') + `<td>${stars} <span class="ov-hua">${huaTags(o.palace)}</span>${fl}</td></tr>`;
+    });
+    html += `</table>`;
+    html += `<u>★ 流年七大領域</u>（以流年宮位論；三層四化加權，含忌沖、疊忌、祿逢沖破、羊陀夾忌）：<br>`;
+    html += `<table class="ov-table"><tr><th>領域</th><th>評等</th><th>引動與建議</th></tr>`;
+    R.year.forEach(d => {
+        const bp = palaceByDz(chartData.palaces, d.dz);
+        const hua = d.hua.map(x => `${x.layer}${x.star}化${x.k}`).join('、');
+        const ev = d.events.filter(e => e.text).sort((a, b) => Math.abs(b.v) - Math.abs(a.v)).slice(0, 2).map(e => e.text);
+        html += `<tr><td style="white-space:nowrap;">${d.icon}${d.label}<br><span style="opacity:.55;font-size:.9em;">年${PALACE_SHORT[PALACE_NAMES.indexOf(d.key)]}・${DI_ZHI[d.dz]}<br>本${bp ? PALACE_SHORT[PALACE_NAMES.indexOf(bp.name)] : ''}</span></td>` +
+                `<td><b style="color:${d.level.color};white-space:nowrap;">${d.level.text}</b></td>` +
+                `<td>${hua ? hua + '<br>' : ''}${ev.length ? '<b>' + ev.join('；') + '</b><br>' : ''}<span style="opacity:.8;">${FB_ADVICE[d.label][fbAdviceKey(d.level)]}</span></td></tr>`;
+    });
+    html += `</table>`;
+    return html;
+}
+
 function renderReport() {
     document.getElementById('reportArea').style.display = 'block';
     const palaces = chartData.palaces;
@@ -4971,6 +5164,7 @@ function renderReport() {
     let card12 = '';
     if (yGan) {
         const yFly12 = computeFly(palaces, yGan);
+        try { card12 += fbBuildYearHtml(); } catch (e) { console.warn('flow overlay', e); }
         const YEAR_TARGETS_12 = {
             '財帛宮': {
                 '祿': { desc:'今年賺錢機會增加，吸財力強，適合主動出擊、開拓收入。', guide:'🎯 積極開展——啟動新收入計畫或兼職。獲利後立即轉入實體資產強制「入庫」，防止財氣消散。' },
@@ -5319,6 +5513,7 @@ function analyzeFlowMonth(n, douJun, fy) {
     const dz = (douJun + n - 1) % 12;
     const mingP = palaceByDz(palaces, dz);
     const mGan = getPalaceGan(flowYearGan, (n + 1) % 12);   // 流月天干（五虎遁：正月建寅）
+    const fsY = getFlowStars(flowYearGan, DI_ZHI[getFlowYearZhiIdx(fy)]);   // 流年星曜
     let score = 0;
     const notes = [];
 
@@ -5336,7 +5531,8 @@ function analyzeFlowMonth(n, douJun, fy) {
         const sha   = (p ? p.stars.b : []).filter(s => MF_SHA.includes(s));
         score += lucky.length * 0.6 * pos.mul;
         score -= sha.length * 0.8 * pos.mul;
-        return { ...pos, dz: pdz, palace: p, mains, lucky, sha };
+        const flow = flowStarsAt(fsY, pdz);
+        return { ...pos, dz: pdz, palace: p, mains, lucky, sha, flow };
     });
     if (!posInfo[0].mains.length) {
         score -= 0.3;
@@ -5384,6 +5580,16 @@ function analyzeFlowMonth(n, douJun, fy) {
             notes.push(`${pi.label}祿忌同宮：有得有失，先得後失或得之有代價，見好就收。`);
         }
     });
+    // 流年星曜：羊陀夾忌、流羊／流陀遇忌、流祿與魁鉞
+    const jiPos = [...new Set(jiHits.map(h => h.pos))];
+    jiPos.forEach(pos => {
+        const lab = jiHits.filter(h => h.pos === pos).map(h => h.layer + '忌').join('、');
+        if (fsY['流祿'] === pos.dz) { score -= 0.6 * pos.mul; notes.push(`${lab}入${pos.label}，又被流年擎羊、陀羅相夾（羊陀夾忌），防突發壓力與意外破耗。`); }
+        else if (fsY['流羊'] === pos.dz) { score -= 0.4 * pos.mul; notes.push(`${lab}入${pos.label}又逢流年擎羊，性急易衝突，防口角與受傷。`); }
+        else if (fsY['流陀'] === pos.dz) { score -= 0.3 * pos.mul; notes.push(`${lab}入${pos.label}又逢流年陀羅，事情拖延反覆，宜耐心處理。`); }
+    });
+    if (posInfo[0].flow.includes('流祿')) { score += 0.4; notes.push('流年祿存入流月命宮，財源較穩，可穩健累積。'); }
+    if (posInfo[0].flow.some(s => s === '流魁' || s === '流鉞')) { score += 0.3; notes.push('流年魁鉞入流月命宮，有貴人提攜，遇事可請託。'); }
 
     const verdict = mfVerdict(score);
     return { n, dz, mingP, mGan, posInfo, hits, notes, score, verdict };
@@ -5423,6 +5629,8 @@ function getMonthlyFortuneText() {
     const best = [...months].sort((a, b) => b.score - a.score).slice(0, 3).sort((a, b) => a.n - b.n);
     const worst = [...months].sort((a, b) => a.score - b.score).slice(0, 3).sort((a, b) => a.n - b.n);
 
+    let FBt = null;
+    try { FBt = fbAnalyzeYear(fy); } catch (e) {}
     let txt = `【📆 ${fy}年（${flowYearGan}${flowZhi}）流月逐月運勢】\n${'─'.repeat(30)}\n`;
     txt += `斗君在${DI_ZHI[dj]}（正月流月命宮）・月份為農曆\n`;
     txt += `總覽：${months.map(m => MF_MON[m.n - 1] + '月' + m.verdict.text).join('｜')}\n`;
@@ -5432,6 +5640,10 @@ function getMonthlyFortuneText() {
         const { yi, ji, dom } = mfAdvice(m);
         txt += `\n▶ 農曆${MF_MON[m.n - 1]}月【${m.verdict.text}】${m.mGan}干・流月命宮在${DI_ZHI[m.dz]}（本命${m.mingP ? m.mingP.name : ''}）\n`;
         if (dom.theme) txt += `本月重心：${dom.theme}\n`;
+        if (FBt) {
+            const M = FBt.months[m.n - 1];
+            txt += `領域：${M.domains.map(d => d.label + d.level.text).join('　')}${M.isPeak ? '　🔔應期月' : ''}\n`;
+        }
         txt += `三方四正：\n`;
         m.posInfo.forEach(pi => {
             const mains = pi.mains.length ? pi.mains.map(x => x.s + (x.w ? '(' + x.w + ')' : '')).join('、') : '無主星';
@@ -5487,6 +5699,41 @@ async function shareMonthlyReport() {
     }
 }
 
+// 12 個月 × 財事感健 熱度條
+function fbHeatHtml(R) {
+    const C = { j: '#d4a017', p: 'rgba(255,255,255,.13)', x: '#e08a4a', dx: '#c0392b' };
+    const MS = ['正','二','三','四','五','六','七','八','九','十','冬','臘'];
+    let html = `<div class="fb-heat"><div class="fb-hrow fb-hhead"><span></span>` +
+        R.months.map(M => `<span>${MS[M.n - 1]}${M.isPeak ? '<i>🔔</i>' : ''}</span>`).join('') + `</div>`;
+    FB_MONTH_DOMAINS.forEach(lbl => {
+        html += `<div class="fb-hrow"><span class="fb-hlbl">${lbl.slice(0, 1)}</span>` + R.months.map(M => {
+            const d = M.domains.find(x => x.label === lbl);
+            return `<span class="fb-hcell" style="background:${C[d.level.key]};opacity:${d.level.key === 'p' ? 1 : .95}" title="${MF_MON[M.n - 1]}月 ${lbl}${d.level.text}"></span>`;
+        }).join('') + `</div>`;
+    });
+    html += `<div class="fb-hleg">` + [['吉','j'],['平','p'],['小心','x'],['守成','dx']].map(([t, k]) =>
+        `<span><i style="background:${C[k]};${k === 'p' ? 'outline:1px solid rgba(255,255,255,.25);' : ''}"></i>${t}</span>`).join('') +
+        `<span>🔔 應期</span></div></div>`;
+    return html;
+}
+// 單月：領域評等＋應期說明
+function fbMonthDomHtml(R, n) {
+    const M = R.months[n - 1];
+    let html = `<div class="fb-doms">` + M.domains.map(d =>
+        `<span class="fb-dom">${d.icon}${d.label} <b style="color:${d.level.color}">${d.level.text}</b></span>`).join('') + `</div>`;
+    const key = M.domains.slice().sort((a, b) => Math.abs(b.score) - Math.abs(a.score))[0];
+    const ev = key && Math.abs(key.score) >= 1.5 ? fbTopEvent(key) : '';
+    if (ev) html += `<div class="mf-note">${key.label}${key.level.text}：${ev}</div>`;
+    if (M.isPeak) {
+        const pk = R.yearS[M.mMing];
+        const pkEv = pk.events.filter(e => e.text).sort((a, b) => Math.abs(b.v) - Math.abs(a.v))[0];
+        const bp = palaceByDz(chartData.palaces, M.mMing);
+        html += `<div class="fb-peak">🔔 <b>應期月</b>：流月命宮走到今年引動最強的本命${bp ? bp.name : ''}` +
+                `${pkEv ? '（' + pkEv.text + '）' : ''}，相關的事最容易在這個月發生。</div>`;
+    }
+    return html;
+}
+
 function renderMonthlyFortune() {
     const box = document.getElementById('monthlyFortune');
     if (!box || !chartData) return;
@@ -5494,6 +5741,8 @@ function renderMonthlyFortune() {
     if (!fy) { box.style.display = 'none'; return; }
     const douJun = getDouJunDzIdx(fy);
     const months = Array.from({ length: 12 }, (_, i) => analyzeFlowMonth(i + 1, douJun, fy));
+    let FB = null;
+    try { FB = fbAnalyzeYear(fy); } catch (e) { console.warn('fbAnalyzeYear', e); }
 
     // 今日所在農曆月（同一流年才標示）
     let curMonth = 0;
@@ -5522,11 +5771,12 @@ function renderMonthlyFortune() {
     // 12 月總覽條
     html += '<div class="mf-strip">' + months.map(m =>
         `<button class="mf-chip mf-${m.verdict.key}${m.n === curMonth ? ' mf-now' : ''}" onclick="mfOpen(${m.n})">
-            <span class="mf-chip-m">${MF_MON[m.n - 1]}月</span>
+            ${FB && FB.months[m.n - 1].isPeak ? '<span class="mf-bell">🔔</span>' : ''}<span class="mf-chip-m">${MF_MON[m.n - 1]}月</span>
             <span class="mf-chip-v">${m.verdict.text}</span>
             <span class="mf-chip-p">${m.mingP ? m.mingP.name.replace('宮', '') : ''}</span>
         </button>`).join('') + '</div>';
 
+    if (FB) html += fbHeatHtml(FB);
     html += `<div class="mf-keys">
         <div>🎯 <b>可積極月份</b>：${best.map(m => MF_MON[m.n - 1] + '月').join('、')}</div>
         <div>🛡️ <b>宜保守月份</b>：${worst.map(m => MF_MON[m.n - 1] + '月').join('、')}</div>
@@ -5543,7 +5793,8 @@ function renderMonthlyFortune() {
                 : '<span class="mf-empty">（無主星）</span>';
             const lucky = pi.lucky.map(s => `<span class="mf-lucky">${s}</span>`).join('');
             const sha = pi.sha.map(s => `<span class="mf-sha">${s}</span>`).join('');
-            return `<div class="mf-pos"><span class="mf-pos-l">${pi.label}<small>${pi.dz !== undefined ? DI_ZHI[pi.dz] : ''}・本命${pi.palace ? pi.palace.name : ''}</small></span>${mains}${lucky}${sha}</div>`;
+            const flow = (pi.flow || []).map(s => `<span class="mf-flow">${s}</span>`).join('');
+            return `<div class="mf-pos"><span class="mf-pos-l">${pi.label}<small>${pi.dz !== undefined ? DI_ZHI[pi.dz] : ''}・本命${pi.palace ? pi.palace.name : ''}</small></span>${mains}${lucky}${sha}${flow}</div>`;
         }).join('');
 
         const order = { '流月': 0, '流年': 1, '大限': 2, '生年': 3 };
@@ -5567,6 +5818,7 @@ function renderMonthlyFortune() {
             </summary>
             <div class="mf-body">
                 <div class="mf-theme">本月重心：<b>${dom.theme}</b></div>
+                ${FB ? fbMonthDomHtml(FB, m.n) : ''}
                 <div class="mf-sec">◆ 三方四正星曜</div>${starLines}
                 <div class="mf-sec">◆ 四化引動</div>${hitLines}
                 ${m.notes.length ? `<div class="mf-sec">◆ 特殊格局</div>` + m.notes.map(t => `<div class="mf-note">${t}</div>`).join('') : ''}
@@ -7242,11 +7494,22 @@ function buildAIContext() {
     let monthInfo = '';
     try {
         const dj = getDouJunDzIdx(fy);
+        let FBa = null;
+        try { FBa = fbAnalyzeYear(fy); } catch (e) {}
         monthInfo = '\n流月概況（斗君在' + DI_ZHI[dj] + '）：\n' + Array.from({length:12}, (_, i) => {
             const m = analyzeFlowMonth(i + 1, dj, fy);
             const hits = m.hits.map(h => h.layer + h.k + '(' + h.star + '入' + h.pos.label + ')').join('、') || '無四化引動';
-            return MF_MON[i] + '月：流月命宮在本命' + (m.mingP ? m.mingP.name : '?') + '，' + m.mGan + '干，評等' + m.verdict.text + '；' + hits;
+            const fbm = FBa ? FBa.months[i] : null;
+            return MF_MON[i] + '月：流月命宮在本命' + (m.mingP ? m.mingP.name : '?') + '，' + m.mGan + '干，評等' + m.verdict.text +
+                (fbm ? '（' + fbm.domains.map(d => d.label.slice(0, 1) + d.level.text).join(' ') + (fbm.isPeak ? '，★應期月' : '') + '）' : '') + '；' + hits;
         }).join('\n') + '\n';
+        if (FBa) {
+            const fz = getFlowYearZhiIdx(fy);
+            monthInfo = `流年命宮：${DI_ZHI[fz]}（疊本命${(palaceByDz(chartData.palaces, fz) || {}).name || '?'}）\n` +
+                `流年疊宮：${buildOverlay(chartData, currentDaxian, fy).sort((a, b) => a.yrIdx - b.yrIdx).map(o => '流年' + o.yr + '=本命' + o.ben + (o.dx ? '=大限' + o.dx : '')).join('；')}\n` +
+                `流年星曜：${FLOW_STAR_KEYS.map(k => k + DI_ZHI[FBa.fs[k]]).join(' ')}\n` +
+                `流年七大領域：${FBa.year.map(d => d.label + d.level.text + (fbTopEvent(d) ? '（' + fbTopEvent(d) + '）' : '')).join('；')}\n` + monthInfo;
+        }
     } catch (e) {}
     return `你是精通曾氏紫微斗數飛星四化理則的命理大師，擅長三層體用出（生年・大限・流年）深度分析。
 以下是命主的完整命盤，請在整個對話過程中始終根據此命盤回答所有問題：
