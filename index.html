@@ -3647,6 +3647,23 @@ function fbAnalyzeYear(fy) {
     }
     return { yGan, yZhiIdx, fs, yearS, year, douJun, months, peak };
 }
+// 引動事件轉白話（旁白用）
+function fbEvSpeech(ev) {
+    if (!ev) return '';
+    let m;
+    const stack = (s, w) => { const a = s.split('＋'); return a.length === 2 ? `${a[0]}與${a[1]}雙${w}相疊` : `${a.join('、')}${['','','雙','三','四'][a.length] || '多'}${w}相疊`; };
+    if ((m = ev.match(/^疊祿（(.+)）$/))) return stack(m[1], '祿');
+    if ((m = ev.match(/^疊忌（(.+)）$/))) return stack(m[1], '忌');
+    if ((m = ev.match(/^祿逢沖破（(.+?)忌沖(.+?)祿）$/))) return `${m[2]}的祿被${m[1]}化忌沖破`;
+    if ((m = ev.match(/^祿忌同宮（(.+?)祿遇(.+?)忌）$/))) return `${m[1]}化祿遇上${m[2]}化忌`;
+    if ((m = ev.match(/^(.+?)忌沖$/))) return `${m[1]}化忌來沖`;
+    if (ev === '羊陀夾忌') return '化忌又被流年羊陀夾制';
+    if (ev === '流羊與忌同宮') return '化忌遇上流年擎羊';
+    if (ev === '流陀與忌同宮') return '化忌遇上流年陀羅';
+    if (ev === '流祿存會祿') return '流年祿存會合化祿';
+    return ev.replace(/（.*?）/g, '');
+}
+
 function fbAdviceKey(lv) { return lv.key === 'j' ? 'up' : lv.key === 'p' ? 'flat' : 'down'; }
 const FB_ADVICE = {
     '整體': { up:'運勢順，適合推動重要計畫、主動爭取機會。', flat:'平穩之年，按部就班，累積實力。', down:'壓力集中在自身，重大決策放慢，先求穩再求進。' },
@@ -5917,13 +5934,24 @@ function mfaBuild() {
     const worst = byScore.slice(-3).map(m => m.n - 1).sort((a, b) => a - b);
     const die = months.filter(m => m.notes.some(n => n.startsWith('疊忌'))).map(m => m.n - 1);
     const join = arr => arr.map(mn).join('、');
+    let FB = null;
+    try { FB = fbAnalyzeYear(fy); } catch (e) {}
+    const peakIdx = FB ? FB.months.findIndex(M => M.isPeak) : -1;
+    let peakWhy = '';
+    if (peakIdx >= 0) {
+        const pk = FB.yearS[FB.months[peakIdx].mMing];
+        const pe = pk.events.filter(e => e.text).sort((a, b) => Math.abs(b.v) - Math.abs(a.v))[0];
+        peakWhy = pe ? fbEvSpeech(pe.text) : '';
+    }
 
     const scenes = [];
     scenes.push({ type: 'intro', name, fy, gz, lines: [
         hasName ? `這是命主「${name}」${fy}年的流月運勢分析。` : `這是${fy}年的流月運勢分析。`, `${gz}年，我們一個月一個月來看。`] });
     scenes.push({ type: 'overview', months, best, worst, dj, lines: [
         `今年的斗君在${DI_ZHI[dj]}，也就是正月的流月命宮落在${DI_ZHI[dj]}宮。`,
-        `整體來看，${join(best)}，是可以積極出擊的月份；`, `${join(worst)}，則要比較保守。`] });
+        `整體來看，${join(best)}，是可以積極出擊的月份；`, `${join(worst)}，則要比較保守。`,
+        ...(FB ? [`今年流年命宮在${DI_ZHI[FB.yZhiIdx]}，疊本命${(palaceByDz(chartData.palaces, FB.yZhiIdx) || {}).name || ''}。`] : []),
+        ...(peakIdx >= 0 ? [`應期在${mn(peakIdx)}，事情最容易在這個月發生。`] : [])], peakIdx });
 
     months.forEach((m, i) => {
         const { yi, ji, dom } = mfAdvice(m);
@@ -5945,9 +5973,19 @@ function mfaBuild() {
         } else {
             L.push('三方四正沒有四化引動，以星曜本質論，平穩行事。');
         }
+        const FM = FB ? FB.months[i] : null;
+        if (FM && FM.isPeak) {
+            const bp = palaceByDz(chartData.palaces, FM.mMing);
+            L.push(`這是今年的應期月，流月命宮走到引動最強的本命${bp ? bp.name : ''}${peakWhy ? '，' + peakWhy : ''}，相關的事最容易在這個月發生。`);
+        }
+        if (FM) {
+            const act = FM.domains.filter(dd => dd.level.key !== 'p');
+            if (act.length) L.push(`分領域來看，${act.map(dd => dd.label + dd.level.text).join('、')}。`);
+        }
         const j0 = ji[0].startsWith('無明顯') ? '整體沒有明顯凶象，留意細節即可。' : `要注意的是，${ji[0]}`;
         L.push(`這個月${mfaClean(yi[0])}；${j0}`);
-        scenes.push({ type: 'month', idx: i, m, dom, yi, ji, tags: mfaTags(m), chips: mfaKeyHits(m).slice(0, 4), lines: L });
+        scenes.push({ type: 'month', idx: i, m, dom, yi, ji, tags: mfaTags(m), chips: mfaKeyHits(m).slice(0, 4), lines: L,
+                      doms: FM ? FM.domains : [], isPeak: !!(FM && FM.isPeak) });
     });
 
     const sum = [['黃金月', join(best), '重要計畫排在這幾個月推動', MFA_COL.ver['大吉']],
@@ -5957,6 +5995,10 @@ function mfaBuild() {
     if (die.length) {
         sum.push(['疊忌月', join(die), '事業財務守成，不投機、不擴張', MFA_COL.ver['守成']]);
         sl.push(`另外，${join(die)}疊忌較重，事業和財務都要守成，不投機、不擴張。`);
+    }
+    if (peakIdx >= 0) {
+        sum.push(['應期月', mn(peakIdx), '流月命宮走到今年引動最強的宮位', '#3fa7e0']);
+        sl.push(`還有，${mn(peakIdx)}是今年的應期月，相關的事最容易在這個月發生。`);
     }
     scenes.push({ type: 'summary', sum, lines: sl });
     scenes.push({ type: 'outro', name, fy, gz, lines: ['以上分析，提供給您做個參考。'] });
@@ -6079,6 +6121,10 @@ function mfaOverview(c, s, t, L, d) {
             mfaT(c, m.verdict.text, x + w / 2, yy + 126, mfaF(900, 64), k ? '#fff8e6' : col);
             mfaT(c, `本命${m.mingP ? m.mingP.name : ''}`, x + w / 2, yy + 198, mfaF(400, 28, 'sans'), k ? MFA_COL.cream : MFA_COL.dim);
             if (k) mfaAlpha(c, k, () => mfaT(c, g ? '★' : '▲', x + w - 28, yy + 30, mfaF(700, 32, 'sans'), g ? MFA_COL.ver['大吉'] : MFA_COL.ver['守成']));
+            if (i === s.peakIdx) mfaAlpha(c, mfaRamp(t, L[L.length - 1] ?? Infinity, 0.5), () => {
+                c.strokeStyle = '#3fa7e0'; c.lineWidth = 6; mfaRR(c, x - 4, yy - 4, w + 8, h + 8, 20); c.stroke();
+                mfaT(c, '🔔', x + 30, yy + 32, mfaF(700, 34, 'sans'), '#3fa7e0');
+            });
         });
     });
 }
@@ -6115,6 +6161,24 @@ function mfaMonth(c, s, t, L, d) {
             c.strokeStyle = cc; c.lineWidth = 2; c.stroke();
             mfaT(c, tag, x + w / 2, 483, mfaF(700, 28, 'sans'), cc); x += w + 14;
         });
+    });
+    // 領域評等（財事感健）＋應期
+    if (s.doms && s.doms.length) mfaAlpha(c, mfaRamp(t, 0.35, 0.5), () => {
+        let x = 70;
+        const LC = { j: MFA_COL.ver['吉'], p: MFA_COL.ver['平'], x: MFA_COL.ver['小心'], dx: MFA_COL.ver['守成'] };
+        s.doms.forEach(dd => {
+            const tx = `${dd.label.slice(0, 1)} ${dd.level.text}`, cc = LC[dd.level.key];
+            c.font = mfaF(700, 28, 'sans'); const w = c.measureText(tx).width + 34;
+            mfaRR(c, x, 540, w, 48, 12); c.fillStyle = mfaMix(MFA_COL.ink, cc, dd.level.key === 'p' ? 0.08 : 0.22, 0.92); c.fill();
+            c.strokeStyle = mfaA(cc, dd.level.key === 'p' ? 0.4 : 0.9); c.lineWidth = 2; c.stroke();
+            mfaT(c, tx, x + w / 2, 565, mfaF(700, 28, 'sans'), dd.level.key === 'p' ? MFA_COL.dim : cc); x += w + 12;
+        });
+        if (s.isPeak) {
+            const tx = '🔔 應期月'; c.font = mfaF(700, 28, 'sans'); const w = c.measureText(tx).width + 34;
+            mfaRR(c, MFA_W - 70 - w, 540, w, 48, 24); c.fillStyle = mfaMix(MFA_COL.ink, '#3fa7e0', 0.3, 0.95); c.fill();
+            c.strokeStyle = '#3fa7e0'; c.lineWidth = 2; c.stroke();
+            mfaT(c, tx, MFA_W - 70 - w / 2, 565, mfaF(700, 28, 'sans'), '#bfe4fb');
+        }
     });
     // 命盤
     const bi = m.dz, base = DI_ZHI[bi];
@@ -6210,19 +6274,20 @@ function mfaMonth(c, s, t, L, d) {
 }
 function mfaSummary(c, s, t, L, d) {
     mfaHeader(c, d, '全年重點'); mfaStrip(c, d, -1);
-    mfaT(c, `${s.sum.length === 3 ? '三' : '兩'}個重點`, MFA_W / 2, 360, mfaF(900, 78), MFA_COL.cream);
+    mfaT(c, `${['','一','兩','三','四'][s.sum.length] || s.sum.length}個重點`, MFA_W / 2, 360, mfaF(900, 78), MFA_COL.cream);
+    const four = s.sum.length >= 4, CH = four ? 220 : 260, ST = four ? 245 : 300, SC = CH / 260;
     s.sum.forEach(([k, mo, txt, cc], i) => {
         const a = mfaRamp(t, L[i + 1], 0.5);
         mfaAlpha(c, a, () => {
-            const x = 60 + (1 - a) * 60, y = 480 + i * 300;
-            mfaRR(c, x, y, 960, 260, 24); c.fillStyle = mfaMix(MFA_COL.ink, cc, 0.15, 0.94); c.fill();
+            const x = 60 + (1 - a) * 60, y = 460 + i * ST;
+            mfaRR(c, x, y, 960, CH, 24); c.fillStyle = mfaMix(MFA_COL.ink, cc, 0.15, 0.94); c.fill();
             c.strokeStyle = mfaA(cc, 0.9); c.lineWidth = 3; c.stroke();
-            c.beginPath(); c.arc(x + 94, y + 130, 60, 0, Math.PI * 2); c.fillStyle = cc; c.fill();
-            mfaT(c, String(i + 1), x + 94, y + 132, mfaF(900, 70), '#190e06');
-            mfaT(c, k, x + 190, y + 62, mfaF(400, 34, 'sans'), cc, 'left');
+            c.beginPath(); c.arc(x + 94, y + CH / 2, 60 * SC, 0, Math.PI * 2); c.fillStyle = cc; c.fill();
+            mfaT(c, String(i + 1), x + 94, y + CH / 2 + 2, mfaF(900, Math.round(70 * SC)), '#190e06');
+            mfaT(c, k, x + 190, y + 62 * SC, mfaF(400, 34, 'sans'), cc, 'left');
             c.font = mfaF(900, 54); const mo2 = mfaWrap(c, mo.replace(/、/g, '・'), 740, 1)[0];
-            mfaT(c, mo2, x + 190, y + 126, mfaF(900, 54), MFA_COL.cream, 'left');
-            mfaT(c, txt, x + 190, y + 198, mfaF(500, 34, 'sans'), MFA_COL.dim, 'left');
+            mfaT(c, mo2, x + 190, y + 126 * SC, mfaF(900, 54), MFA_COL.cream, 'left');
+            mfaT(c, txt, x + 190, y + 198 * SC, mfaF(500, 34, 'sans'), MFA_COL.dim, 'left');
         });
     });
 }
